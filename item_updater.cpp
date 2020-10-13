@@ -90,9 +90,11 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
             }
         }
     }
+	std::cerr<<"VErsion is "<< version <<"\n";
     if (version.empty() || filePath.empty() ||
         purpose == VersionPurpose::Unknown)
     {
+		std::cerr<<"Goiong out bcs version.empty() or filePath.empty() or VersionPurpose::Unknown\n";
         return;
     }
 
@@ -107,7 +109,7 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
 
     auto versionId = path.substr(pos + 1);
 
-    if (activations.find(versionId) == activations.end())
+    if (activations.find(path) == activations.end())
     {
         // Determine the Activation state by processing the given image dir.
         auto activationState = server::Activation::Activations::Invalid;
@@ -126,13 +128,15 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
             associations.emplace_back(
                 std::make_tuple(ACTIVATION_FWD_ASSOCIATION,
                                 ACTIVATION_REV_ASSOCIATION, bmcInventoryPath));
+			std::cerr<<"BMC Inventory PAth "<< bmcInventoryPath << "\n";
         }
 
 		std::cerr<<"Activation for the ID " <<versionId <<"\n";
         activations.insert(std::make_pair(
-            versionId,
+            path,
             std::make_unique<Activation>(bus, path, *this, versionId,
                                          activationState, associations)));
+		std::cerr<<"After insertion in activation\n";
 
 
         auto versionPtr = std::make_unique<VersionClass>(
