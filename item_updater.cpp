@@ -53,6 +53,7 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
     std::string path(std::move(objPath));
     std::string filePath;
 
+	std::cerr<<"Path at createActivation "<< path <<"\n";
     for (const auto& intf : interfaces)
     {
         if (intf.first == VERSION_IFACE)
@@ -127,10 +128,12 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
                                 ACTIVATION_REV_ASSOCIATION, bmcInventoryPath));
         }
 
+		std::cerr<<"Activation for the ID " <<versionId <<"\n";
         activations.insert(std::make_pair(
             versionId,
             std::make_unique<Activation>(bus, path, *this, versionId,
                                          activationState, associations)));
+
 
         auto versionPtr = std::make_unique<VersionClass>(
             bus, path, version, purpose, filePath,
@@ -321,6 +324,8 @@ void ItemUpdater::processBMCImage()
 
 void ItemUpdater::erase(std::string entryId)
 {
+	std::cerr<<"Erasing Id from erase function "<< entryId <<"\n";
+
     // Find entry in versions map
     auto it = versions.find(entryId);
     if (it != versions.end())
@@ -356,12 +361,12 @@ void ItemUpdater::erase(std::string entryId)
 
     if (it != versions.end())
     {
-        // Delete ReadOnly partitions if it's not active
+    /*    // Delete ReadOnly partitions if it's not active
         removeReadOnlyPartition(entryId);
         removePersistDataDirectory(entryId);
 
         // Removing entry in versions map
-        this->versions.erase(entryId);
+        this->versions.erase(entryId); */
     }
     else
     {
@@ -707,6 +712,7 @@ void ItemUpdater::freeSpace(Activation& caller)
     // remove the highest priority one(s).
     while ((count >= ACTIVE_BMC_MAX_ALLOWED) && (!versionsPQ.empty()))
     {
+		std::cerr<<"REmoving versions here..\n";
         erase(versionsPQ.top().second);
         versionsPQ.pop();
         count--;

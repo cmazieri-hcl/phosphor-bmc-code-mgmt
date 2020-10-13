@@ -25,7 +25,7 @@ option('verify-signature', type: 'feature',
 # Variables
 option(
     'active-bmc-max-allowed', type: 'integer',
-    value: 1,
+    value: 4,
     description: 'The maximum allowed active BMC versions.',
 )
 

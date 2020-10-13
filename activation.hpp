@@ -11,6 +11,7 @@
 #include <xyz/openbmc_project/Association/Definitions/server.hpp>
 #include <xyz/openbmc_project/Software/Activation/server.hpp>
 #include <xyz/openbmc_project/Software/ActivationBlocksTransition/server.hpp>
+#include<iostream>
 
 #ifdef WANT_SIGNATURE_VERIFY
 #include <filesystem>
@@ -199,6 +200,7 @@ class Activation : public ActivationInherit, public Flash
             std::bind(std::mem_fn(&Activation::unitStateChange), this,
                       std::placeholders::_1))
     {
+		std::cerr<<"Create Activation from Activation\n";
         // Set Properties.
         activation(activationStatus);
         associations(assocs);

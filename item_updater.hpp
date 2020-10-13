@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace phosphor
 {
@@ -59,6 +60,7 @@ class ItemUpdater : public ItemUpdaterInherit
                      std::bind(std::mem_fn(&ItemUpdater::createActivation),
                                this, std::placeholders::_1))
     {
+		std::cerr<<"Coming Inside Constructor\n";
         setBMCInventoryPath();
         processBMCImage();
         restoreFieldModeStatus();
@@ -160,7 +162,7 @@ class ItemUpdater : public ItemUpdaterInherit
 
     /** @brief Persistent map of Version D-Bus objects and their
      * version id */
-    std::map<std::string, std::unique_ptr<VersionClass>> versions;
+    std::multimap<std::string, std::unique_ptr<VersionClass>> versions;
 
     /** @brief Vector of needed BMC images in the tarball*/
     std::vector<std::string> imageUpdateList;
@@ -223,7 +225,7 @@ class ItemUpdater : public ItemUpdaterInherit
 
     /** @brief Persistent map of Activation D-Bus objects and their
      * version id */
-    std::map<std::string, std::unique_ptr<Activation>> activations;
+    std::multimap<std::string, std::unique_ptr<Activation>> activations;
 
     /** @brief sdbusplus signal match for Software.Version */
     sdbusplus::bus::match_t versionMatch;
