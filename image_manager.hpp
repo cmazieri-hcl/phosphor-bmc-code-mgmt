@@ -1,4 +1,5 @@
 #pragma once
+#include "host_to_be_updated.hpp"
 #include "version.hpp"
 
 #include <sdbusplus/server.hpp>
@@ -47,6 +48,8 @@ class Manager
     /** @brief Persistent map of Version dbus objects and their
      * version id */
     std::multimap<std::string, std::unique_ptr<Version>> versions;
+
+    std::multimap<std::string, std::unique_ptr<HostToBeUpdated>> toBeUpdatedObj;
 
     /** @brief Persistent sdbusplus DBus bus connection. */
     sdbusplus::bus::bus& bus;

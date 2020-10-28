@@ -2,9 +2,11 @@
 
 #include "item_updater.hpp"
 
+#include "host_to_be_updated.hpp"
 #include "images.hpp"
 #include "serialize.hpp"
 #include "version.hpp"
+#include "xyz/openbmc_project/Software/HostToBeUpdated/server.hpp"
 #include "xyz/openbmc_project/Software/Version/server.hpp"
 
 #include <phosphor-logging/elog-errors.hpp>
@@ -43,6 +45,7 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
     using SVersion = server::Version;
     using VersionPurpose = SVersion::VersionPurpose;
     using VersionClass = phosphor::software::manager::Version;
+    using HostToBeUpdatedClass = phosphor::software::manager::HostToBeUpdated;
 
     sdbusplus::message::object_path objPath;
     auto purpose = VersionPurpose::Unknown;

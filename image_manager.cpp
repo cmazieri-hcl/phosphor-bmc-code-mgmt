@@ -2,6 +2,7 @@
 
 #include "image_manager.hpp"
 
+#include "host_to_be_updated.hpp"
 #include "version.hpp"
 #include "watch.hpp"
 
@@ -209,6 +210,10 @@ int Manager::processImage(const std::string& tarFilePath)
                 std::make_unique<phosphor::software::manager::Delete>(
                     bus, objPath, *versionPtr);
             versions.insert(std::make_pair(id, std::move(versionPtr)));
+
+            auto hostObjPtr =
+                std::make_unique<HostToBeUpdated>(bus, objPath, false);
+            toBeUpdatedObj.insert(std::make_pair(id, std::move(hostObjPtr)));
         }
         else
         {
