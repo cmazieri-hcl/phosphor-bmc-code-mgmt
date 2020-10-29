@@ -192,7 +192,14 @@ int Manager::processImage(const std::string& tarFilePath)
     for (int host = 1; host <= 4; host++)
     {
         auto objPath = std::string{SOFTWARE_OBJPATH} + "/host" +
-                       std::to_string(host) + "/" + id;
+                       std::to_string(host);
+
+            auto hostObjPtr =
+                std::make_unique<HostToBeUpdated>(bus, objPath, false);
+            toBeUpdatedObj.insert(std::make_pair(id, std::move(hostObjPtr)));
+    }
+
+        auto objPath = std::string{SOFTWARE_OBJPATH} + "/" + id;
 
         // This service only manages the uploaded versions, and there could be
         // active versions on D-Bus that is not managed by this service.
@@ -210,10 +217,6 @@ int Manager::processImage(const std::string& tarFilePath)
                 std::make_unique<phosphor::software::manager::Delete>(
                     bus, objPath, *versionPtr);
             versions.insert(std::make_pair(id, std::move(versionPtr)));
-
-            auto hostObjPtr =
-                std::make_unique<HostToBeUpdated>(bus, objPath, false);
-            toBeUpdatedObj.insert(std::make_pair(id, std::move(hostObjPtr)));
         }
         else
         {
@@ -222,7 +225,7 @@ int Manager::processImage(const std::string& tarFilePath)
                 entry("VERSION_ID=%s", id.c_str()));
             fs::remove_all(imageDirPath);
         }
-    }
+ 
     return 0;
 }
 
