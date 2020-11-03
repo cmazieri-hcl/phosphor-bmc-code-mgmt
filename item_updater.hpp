@@ -1,6 +1,7 @@
 #pragma once
 
 #include "activation.hpp"
+#include "host_to_be_updated.hpp"
 #include "item_updater_helper.hpp"
 #include "version.hpp"
 #include "xyz/openbmc_project/Collection/DeleteAll/server.hpp"
@@ -59,6 +60,7 @@ class ItemUpdater : public ItemUpdaterInherit
                      std::bind(std::mem_fn(&ItemUpdater::createActivation),
                                this, std::placeholders::_1))
     {
+        createHostToBeUpdatedInterface();
         setBMCInventoryPath();
         processBMCImage();
         restoreFieldModeStatus();
@@ -88,6 +90,11 @@ class ItemUpdater : public ItemUpdaterInherit
      * @brief Create and populate the active BMC Version.
      */
     void processBMCImage();
+
+    /**
+     * @brief Create HostToBeUpdated Interface for all the host
+     */
+    void createHostToBeUpdatedInterface();
 
     /**
      * @brief Erase specified entry D-Bus object
@@ -224,6 +231,9 @@ class ItemUpdater : public ItemUpdaterInherit
     /** @brief Persistent map of Activation D-Bus objects and their
      * version id */
     std::map<std::string, std::unique_ptr<Activation>> activations;
+
+    /** @brief Persistent vector of HostToBeUpdated D-Bus objects */
+    std::vector<std::unique_ptr<HostToBeUpdated>> toBeUpdatedObj;
 
     /** @brief sdbusplus signal match for Software.Version */
     sdbusplus::bus::match_t versionMatch;

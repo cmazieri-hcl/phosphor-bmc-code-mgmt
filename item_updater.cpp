@@ -143,6 +143,19 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
     return;
 }
 
+void ItemUpdater::createHostToBeUpdatedInterface()
+{
+    for (int host = 1; host <= 4; host++)
+    {
+        auto objPath =
+            std::string{SOFTWARE_OBJPATH} + "/host" + std::to_string(host);
+
+        auto hostObjPtr =
+            std::make_unique<HostToBeUpdated>(bus, objPath, false);
+        toBeUpdatedObj.push_back(std::move(hostObjPtr));
+    }
+}
+
 void ItemUpdater::processBMCImage()
 {
     using VersionClass = phosphor::software::manager::Version;
