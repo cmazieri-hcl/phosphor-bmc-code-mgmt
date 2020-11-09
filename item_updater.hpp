@@ -172,6 +172,9 @@ class ItemUpdater : public ItemUpdaterInherit
     /** @brief Vector of needed BMC images in the tarball*/
     std::vector<std::string> imageUpdateList;
 
+    /** @brief Persistent vector of HostToBeUpdated D-Bus objects */
+    std::vector<std::unique_ptr<HostToBeUpdated>> toBeUpdatedObj;
+
   private:
     /** @brief Callback function for Software.Version match.
      *  @details Creates an Activation D-Bus object.
@@ -231,9 +234,6 @@ class ItemUpdater : public ItemUpdaterInherit
     /** @brief Persistent map of Activation D-Bus objects and their
      * version id */
     std::map<std::string, std::unique_ptr<Activation>> activations;
-
-    /** @brief Persistent vector of HostToBeUpdated D-Bus objects */
-    std::vector<std::unique_ptr<HostToBeUpdated>> toBeUpdatedObj;
 
     /** @brief sdbusplus signal match for Software.Version */
     sdbusplus::bus::match_t versionMatch;
