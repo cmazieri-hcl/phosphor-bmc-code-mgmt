@@ -390,25 +390,31 @@ void Activation::flashWriteHost()
 {
     for (int host = 1; host <= 4; host++)
     {
-        auto method = bus.new_method_call(SYSTEMD_BUSNAME, SYSTEMD_PATH,
-                                          SYSTEMD_INTERFACE, "StartUnit");
-        auto biosServiceFile = "obmc-flash-host" + std::to_string(host) +
-                               "-bios@" + versionId + ".service";
-        method.append(biosServiceFile, "replace");
-        try
+        if (parent.toBeUpdatedObj[host - 1]->hostToBeUpdated() == true)
         {
-            auto reply = bus.call(method);
-        }
-        catch (const SdBusError& e)
-        {
-            log<level::ERR>("Error in trying to upgrade Host Bios.");
-            report<InternalFailure>();
+            std::cerr << "Host bios will be updated for the host" << host
+                      << "\n";
+
+            auto method = bus.new_method_call(SYSTEMD_BUSNAME, SYSTEMD_PATH,
+                                              SYSTEMD_INTERFACE, "StartUnit");
+            auto biosServiceFile = "obmc-flash-host" + std::to_string(host) +
+                                   "-bios@" + versionId + ".service";
+            method.append(biosServiceFile, "replace");
+            try
+            {
+                auto reply = bus.call(method);
+            }
+            catch (const SdBusError& e)
+            {
+                log<level::ERR>("Error in trying to upgrade Host Bios.");
+                report<InternalFailure>();
+            }
         }
     }
 }
 
 bool Activation::IsBiosUpdatedForAllSelectedHost()
-    {
+{
     /*    for (auto it = parent.toBeUpdatedObj.begin();
              it != parent.toBeUpdatedObj.end(); it++)
         {
@@ -418,24 +424,23 @@ bool Activation::IsBiosUpdatedForAllSelectedHost()
             }
         }
         return true;
-	*/
-	for (int host = 0; host <= 3; host++)
-	{
-		if(parent.toBeUpdatedObj[host]->hostToBeUpdated() == true)
-		{
-		std::cerr<<"Returning False..\n";
-			return false;
-		}
-	}
-	std::cerr<<"Returning true..\n";
-	return true;
+    */
+    for (int host = 0; host <= 3; host++)
+    {
+        if (parent.toBeUpdatedObj[host]->hostToBeUpdated() == true)
+        {
+            std::cerr << "Returning False..\n";
+            return false;
+        }
     }
+    std::cerr << "Returning true..\n";
+    return true;
+}
 
 void Activation::setHostBiosUpdateProcessed(int host)
-    {
-        parent.toBeUpdatedObj[host-1]->hostToBeUpdated(false);
-    }
-
+{
+    parent.toBeUpdatedObj[host - 1]->hostToBeUpdated(false);
+}
 
 void Activation::onStateChangesBios(sdbusplus::message::message& msg)
 {
@@ -464,7 +469,7 @@ void Activation::onStateChangesBios(sdbusplus::message::message& msg)
 
         // zero based
         index = index + 1;
-		setHostBiosUpdateProcessed(index);
+        setHostBiosUpdateProcessed(index);
 
         if (newStateResult == "done")
         {
@@ -482,20 +487,19 @@ void Activation::onStateChangesBios(sdbusplus::message::message& msg)
             log<level::ERR>(logMsg.c_str());
         }
 
-		if (IsBiosUpdatedForAllSelectedHost())
-            {
-            	// Set activation progress to 100
-              	activationProgress->progress(100);
+        if (IsBiosUpdatedForAllSelectedHost())
+        {
+            // Set activation progress to 100
+            activationProgress->progress(100);
 
-             	// Set Activation value to active
-                activation(softwareServer::Activation::Activations::Active);
-                // unsubscribe to systemd signals
-                unsubscribeFromSystemdSignals();
+            // Set Activation value to active
+            activation(softwareServer::Activation::Activations::Active);
+            // unsubscribe to systemd signals
+            unsubscribeFromSystemdSignals();
 
-                // Remove version object from image manager
-                deleteImageManagerObject();
-            }
-
+            // Remove version object from image manager
+            deleteImageManagerObject();
+        }
     }
 
     return;
