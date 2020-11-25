@@ -143,16 +143,39 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
     return;
 }
 
+std::vector<std::string> ItemUpdater::getInventoryObjects()
+{
+    std::string samplePath= "/xyz/openbmc_project/inventory/system/board";
+    std::string sampleInt = "xyz.openbmc_project.Configuration.IpmbSensor";
+    std::vector<std::string> paths;
+    auto method = bus.new_method_call(MAPPER_BUSNAME, MAPPER_PATH,
+                                      MAPPER_INTERFACE, "GetSubTreePaths");
+    //method.append(INVENTORY_PATH);
+    method.append(samplePath);
+    method.append(0); // Depth 0 to search all
+    //method.append(std::vector<std::string>({BMC_INVENTORY_INTERFACE}));
+    method.append(std::vector<std::string>({sampleInt}));
+    auto reply = bus.call(method);
+    reply.read(paths);
+    return paths;
+}
+
+
 void ItemUpdater::createHostToBeUpdatedInterface()
 {
-    for (int host = 1; host <= 4; host++)
+	auto allinventoryObjs = getInventoryObjects();
+
+	for(auto it = allinventoryObjs.begin(); it != allinventoryObjs.end(); it++)
     {
+		auto pos = it->rfind("/");
+		auto device = it->substr(pos + 1);
+		devices.push_back(device);
         auto objPath =
-            std::string{SOFTWARE_OBJPATH} + "/host" + std::to_string(host);
+            std::string{SOFTWARE_OBJPATH} + device;
 
         auto hostObjPtr =
             std::make_unique<HostToBeUpdated>(bus, objPath, false);
-        toBeUpdatedObj.push_back(std::move(hostObjPtr));
+        toBeUpdatedObj.insert(std::make_pair(device, std::move(hostObjPtr)));
     }
 }
 

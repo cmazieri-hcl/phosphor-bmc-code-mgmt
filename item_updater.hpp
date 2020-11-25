@@ -96,6 +96,8 @@ class ItemUpdater : public ItemUpdaterInherit
      */
     void createHostToBeUpdatedInterface();
 
+	std::vector<std::string> getInventoryObjects();
+
     /**
      * @brief Erase specified entry D-Bus object
      *        if Action property is not set to Active
@@ -173,7 +175,9 @@ class ItemUpdater : public ItemUpdaterInherit
     std::vector<std::string> imageUpdateList;
 
     /** @brief Persistent vector of HostToBeUpdated D-Bus objects */
-    std::vector<std::unique_ptr<HostToBeUpdated>> toBeUpdatedObj;
+    std::map<std::string, std::unique_ptr<HostToBeUpdated>> toBeUpdatedObj;
+
+	std::vector<std::string> devices;
 
   private:
     /** @brief Callback function for Software.Version match.

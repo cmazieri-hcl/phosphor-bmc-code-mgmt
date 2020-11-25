@@ -388,17 +388,17 @@ bool Activation::checkApplyTimeImmediate()
 #ifdef HOST_BIOS_UPGRADE
 void Activation::flashWriteHost()
 {
-    for (int host = 1; host <= 4; host++)
+	for (auto device = parent.devices.begin(); device != parent.devices.end() ; device++)
     {
-        if (parent.toBeUpdatedObj[host - 1]->hostToBeUpdated() == true)
+		if (parent.toBeUpdatedObj.find(*device)->second->hostToBeUpdated() == true)
         {
-            std::cerr << "Host bios will be updated for the host" << host
+            std::cerr << "Host bios will be updated for " << *device
                       << "\n";
 
             auto method = bus.new_method_call(SYSTEMD_BUSNAME, SYSTEMD_PATH,
                                               SYSTEMD_INTERFACE, "StartUnit");
-            auto biosServiceFile = "obmc-flash-host" + std::to_string(host) +
-                                   "-bios@" + versionId + ".service";
+//            auto biosServiceFile = "obmc-flash-host" + std::to_string(host) + "-bios@" + versionId + ".service";
+			auto biosServiceFile = "obmc-flash-host-" + *device + "@" + versionId+ ".service";
             method.append(biosServiceFile, "replace");
             try
             {
@@ -425,9 +425,9 @@ bool Activation::IsBiosUpdatedForAllSelectedHost()
         }
         return true;
     */
-    for (int host = 0; host <= 3; host++)
+    for (auto device = parent.devices.begin(); device != parent.devices.end() ; device++)
     {
-        if (parent.toBeUpdatedObj[host]->hostToBeUpdated() == true)
+        if (parent.toBeUpdatedObj.find(*device)->second->hostToBeUpdated() == true)
         {
             std::cerr << "Returning False..\n";
             return false;
@@ -437,9 +437,9 @@ bool Activation::IsBiosUpdatedForAllSelectedHost()
     return true;
 }
 
-void Activation::setHostBiosUpdateProcessed(int host)
+void Activation::setHostBiosUpdateProcessed(std::string device)
 {
-    parent.toBeUpdatedObj[host - 1]->hostToBeUpdated(false);
+    parent.toBeUpdatedObj.find(device)->second->hostToBeUpdated(false);
 }
 
 void Activation::onStateChangesBios(sdbusplus::message::message& msg)
@@ -452,30 +452,27 @@ void Activation::onStateChangesBios(sdbusplus::message::message& msg)
     // Read the msg and populate each variable
     msg.read(newStateID, newStateObjPath, newStateUnit, newStateResult);
 
-    std::vector<std::string> biosServiceFile;
-    for (int host = 1; host <= 4; host++)
+	std::map<std::string, std::string> biosServiceFile;
+    //std::vector<std::string> biosServiceFile;
+	for (auto device = parent.devices.begin(); device != parent.devices.end() ; device++)
     {
-        biosServiceFile.push_back("obmc-flash-host" + std::to_string(host) +
-                                  "-bios@" + versionId + ".service");
+        //biosServiceFile.push_back("obmc-flash-host" + std::to_string(host) + "-bios@" + versionId + ".service");
+		auto serviceFile = "obmc-flash-host-" + *device + "@" + versionId+ ".service";
+		biosServiceFile.insert(std::make_pair(serviceFile, *device));
     }
-    auto it =
-        std::find(biosServiceFile.begin(), biosServiceFile.end(), newStateUnit);
+//    auto it =  std::find(biosServiceFile.begin(), biosServiceFile.end(), newStateUnit);
 
     std::cerr << "onStateChangesBios newStateUnit " << newStateUnit << "\n";
 
-    if (it != biosServiceFile.end())
+   // if (it != biosServiceFile.end())
+	if (biosServiceFile.find(newStateUnit) != biosServiceFile.end())
     {
-        int index = it - biosServiceFile.begin();
-
-        // zero based
-        index = index + 1;
-        setHostBiosUpdateProcessed(index);
+        setHostBiosUpdateProcessed(biosServiceFile.find(newStateUnit)->second);
 
         if (newStateResult == "done")
         {
             std::string logMsg =
-                "Bios upgrade completed successfully for host" +
-                std::to_string(index);
+                "Bios upgrade completed successfully for " + biosServiceFile.find(newStateUnit)->second ;
             log<level::INFO>(logMsg.c_str());
         }
         else if (newStateResult == "failed")
@@ -483,7 +480,7 @@ void Activation::onStateChangesBios(sdbusplus::message::message& msg)
             // Set Activation value to Failed
             activation(softwareServer::Activation::Activations::Failed);
             std::string logMsg =
-                "Bios upgrade failed for the host" + std::to_string(index);
+                "Bios upgrade failed for " + biosServiceFile.find(newStateUnit)->second;
             log<level::ERR>(logMsg.c_str());
         }
 

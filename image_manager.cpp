@@ -20,6 +20,7 @@
 #include <cstring>
 #include <filesystem>
 #include <string>
+#include <iostream>
 
 namespace phosphor
 {
@@ -63,6 +64,23 @@ std::vector<std::string> getSoftwareObjects(sdbusplus::bus::bus& bus)
     method.append(SOFTWARE_OBJPATH);
     method.append(0); // Depth 0 to search all
     method.append(std::vector<std::string>({VERSION_BUSNAME}));
+    auto reply = bus.call(method);
+    reply.read(paths);
+    return paths;
+}
+
+std::vector<std::string> getInventoryObjects(sdbusplus::bus::bus& bus)
+{
+	std::string samplePath= "/xyz/openbmc_project/inventory/system/board";
+	std::string sampleInt = "xyz.openbmc_project.Configuration.IpmbSensor";
+    std::vector<std::string> paths;
+    auto method = bus.new_method_call(MAPPER_BUSNAME, MAPPER_PATH,
+                                      MAPPER_INTERFACE, "GetSubTreePaths");
+    //method.append(INVENTORY_PATH);
+    method.append(samplePath);
+    method.append(0); // Depth 0 to search all
+    //method.append(std::vector<std::string>({BMC_INVENTORY_INTERFACE}));
+    method.append(std::vector<std::string>({sampleInt}));
     auto reply = bus.call(method);
     reply.read(paths);
     return paths;
@@ -193,6 +211,15 @@ int Manager::processImage(const std::string& tarFilePath)
     // This service only manages the uploaded versions, and there could be
     // active versions on D-Bus that is not managed by this service.
     // So check D-Bus if there is an existing version.
+	auto allinventoryObjs = getInventoryObjects(bus);
+	
+	for(auto it = allinventoryObjs.begin(); it != allinventoryObjs.end(); it++)
+	{
+		int i =1;
+		std::cerr <<"Inventory Object" << i << " : "<< *it << "\n";
+		i++;
+	}
+
     auto allSoftwareObjs = getSoftwareObjects(bus);
     auto it =
         std::find(allSoftwareObjs.begin(), allSoftwareObjs.end(), objPath);

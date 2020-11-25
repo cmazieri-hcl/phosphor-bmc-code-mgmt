@@ -246,7 +246,7 @@ class Activation : public ActivationInherit, public Flash
     /** @brief Function that acts on Bios upgrade service file state changes */
     void onStateChangesBios(sdbusplus::message::message&);
 	bool IsBiosUpdatedForAllSelectedHost();
-    void setHostBiosUpdateProcessed(int host);
+    void setHostBiosUpdateProcessed(std::string device);
 
 #endif
 
