@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xyz/openbmc_project/Software/HostToBeUpdated/server.hpp"
+#include "xyz/openbmc_project/Software/FirmwareUpdate/server.hpp"
 
 #include <sdbusplus/bus.hpp>
 
@@ -14,25 +14,25 @@ namespace software
 namespace updater
 {
 
-using HostToBeUpdatedInherit = sdbusplus::server::object::object<
-    sdbusplus::xyz::openbmc_project::Software::server::HostToBeUpdated>;
+using FirmwareUpdateInherit = sdbusplus::server::object::object<
+    sdbusplus::xyz::openbmc_project::Software::server::FirmwareUpdate>;
 
-class HostToBeUpdated : public HostToBeUpdatedInherit
+class FirmwareUpdate : public FirmwareUpdateInherit
 {
   public:
-    /** @brief Constructs HostToBeUpdated Software Manager
+    /** @brief Constructs FirmwareUpdate Software Manager
      *
      * @param[in] bus            - The D-Bus bus object
      * @param[in] objPath        - The D-Bus object path
      * @param[in] toBeUpdated    - The bool value
      */
-    HostToBeUpdated(sdbusplus::bus::bus& bus, const std::string& objPath,
+    FirmwareUpdate(sdbusplus::bus::bus& bus, const std::string& objPath,
                     const bool toBeUpdated) :
-        HostToBeUpdatedInherit(bus, (objPath).c_str(), true),
+        FirmwareUpdateInherit(bus, (objPath).c_str(), true),
         isUpdated(toBeUpdated)
     {
         // Set properties.
-        hostToBeUpdated(toBeUpdated);
+        firmwareUpdate(toBeUpdated);
         // Emit deferred signal.
         emit_object_added();
     }

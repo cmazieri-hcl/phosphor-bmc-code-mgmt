@@ -161,7 +161,7 @@ std::vector<std::string> ItemUpdater::getInventoryObjects()
 }
 
 
-void ItemUpdater::createHostToBeUpdatedInterface()
+void ItemUpdater::createFirmwareUpdateInterface()
 {
 	auto allinventoryObjs = getInventoryObjects();
 
@@ -171,10 +171,10 @@ void ItemUpdater::createHostToBeUpdatedInterface()
 		auto device = it->substr(pos + 1);
 		devices.push_back(device);
         auto objPath =
-            std::string{SOFTWARE_OBJPATH} + device;
+            std::string{SOFTWARE_OBJPATH} + "/" +  device;
 
         auto hostObjPtr =
-            std::make_unique<HostToBeUpdated>(bus, objPath, false);
+            std::make_unique<FirmwareUpdate>(bus, objPath, false);
         toBeUpdatedObj.insert(std::make_pair(device, std::move(hostObjPtr)));
     }
 }

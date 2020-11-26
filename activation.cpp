@@ -390,7 +390,7 @@ void Activation::flashWriteHost()
 {
 	for (auto device = parent.devices.begin(); device != parent.devices.end() ; device++)
     {
-		if (parent.toBeUpdatedObj.find(*device)->second->hostToBeUpdated() == true)
+		if (parent.toBeUpdatedObj.find(*device)->second->firmwareUpdate() == true)
         {
             std::cerr << "Host bios will be updated for " << *device
                       << "\n";
@@ -418,7 +418,7 @@ bool Activation::IsBiosUpdatedForAllSelectedHost()
     /*    for (auto it = parent.toBeUpdatedObj.begin();
              it != parent.toBeUpdatedObj.end(); it++)
         {
-            if ((*it)->hostToBeUpdated() == true)
+            if ((*it)->firmwareUpdate() == true)
             {
                 return false;
             }
@@ -427,7 +427,7 @@ bool Activation::IsBiosUpdatedForAllSelectedHost()
     */
     for (auto device = parent.devices.begin(); device != parent.devices.end() ; device++)
     {
-        if (parent.toBeUpdatedObj.find(*device)->second->hostToBeUpdated() == true)
+        if (parent.toBeUpdatedObj.find(*device)->second->firmwareUpdate() == true)
         {
             std::cerr << "Returning False..\n";
             return false;
@@ -439,7 +439,7 @@ bool Activation::IsBiosUpdatedForAllSelectedHost()
 
 void Activation::setHostBiosUpdateProcessed(std::string device)
 {
-    parent.toBeUpdatedObj.find(device)->second->hostToBeUpdated(false);
+    parent.toBeUpdatedObj.find(device)->second->firmwareUpdate(false);
 }
 
 void Activation::onStateChangesBios(sdbusplus::message::message& msg)

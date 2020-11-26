@@ -1,7 +1,7 @@
 #pragma once
 
 #include "activation.hpp"
-#include "host_to_be_updated.hpp"
+#include "firmwareUpdate.hpp"
 #include "item_updater_helper.hpp"
 #include "version.hpp"
 #include "xyz/openbmc_project/Collection/DeleteAll/server.hpp"
@@ -60,7 +60,7 @@ class ItemUpdater : public ItemUpdaterInherit
                      std::bind(std::mem_fn(&ItemUpdater::createActivation),
                                this, std::placeholders::_1))
     {
-        createHostToBeUpdatedInterface();
+        createFirmwareUpdateInterface();
         setBMCInventoryPath();
         processBMCImage();
         restoreFieldModeStatus();
@@ -92,9 +92,9 @@ class ItemUpdater : public ItemUpdaterInherit
     void processBMCImage();
 
     /**
-     * @brief Create HostToBeUpdated Interface for all the host
+     * @brief Create FirmwareUpdate Interface for all the host
      */
-    void createHostToBeUpdatedInterface();
+    void createFirmwareUpdateInterface();
 
 	std::vector<std::string> getInventoryObjects();
 
@@ -174,8 +174,8 @@ class ItemUpdater : public ItemUpdaterInherit
     /** @brief Vector of needed BMC images in the tarball*/
     std::vector<std::string> imageUpdateList;
 
-    /** @brief Persistent vector of HostToBeUpdated D-Bus objects */
-    std::map<std::string, std::unique_ptr<HostToBeUpdated>> toBeUpdatedObj;
+    /** @brief Persistent vector of FirmwareUpdate D-Bus objects */
+    std::map<std::string, std::unique_ptr<FirmwareUpdate>> toBeUpdatedObj;
 
 	std::vector<std::string> devices;
 
