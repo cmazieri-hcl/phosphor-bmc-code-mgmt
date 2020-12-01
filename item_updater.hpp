@@ -96,7 +96,10 @@ class ItemUpdater : public ItemUpdaterInherit
      */
     void createFirmwareUpdateInterface();
 
-	std::vector<std::string> getInventoryObjects();
+    /**
+     * @brief Get Firmware update device objects from inventory
+     */
+    std::vector<std::string> getInventoryObjects();
 
     /**
      * @brief Erase specified entry D-Bus object
@@ -177,7 +180,8 @@ class ItemUpdater : public ItemUpdaterInherit
     /** @brief Persistent vector of FirmwareUpdate D-Bus objects */
     std::map<std::string, std::unique_ptr<FirmwareUpdate>> toBeUpdatedObj;
 
-	std::vector<std::string> devices;
+    /** @brief Vector for all the devices found from inventory */
+    std::vector<std::string> devices;
 
   private:
     /** @brief Callback function for Software.Version match.

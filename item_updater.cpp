@@ -145,36 +145,31 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
 
 std::vector<std::string> ItemUpdater::getInventoryObjects()
 {
-    std::string samplePath= "/xyz/openbmc_project/inventory/system/board";
+    std::string samplePath = "/xyz/openbmc_project/inventory/system/board";
     std::string sampleInt = "xyz.openbmc_project.Configuration.IpmbSensor";
     std::vector<std::string> paths;
     auto method = bus.new_method_call(MAPPER_BUSNAME, MAPPER_PATH,
                                       MAPPER_INTERFACE, "GetSubTreePaths");
-    //method.append(INVENTORY_PATH);
     method.append(samplePath);
     method.append(0); // Depth 0 to search all
-    //method.append(std::vector<std::string>({BMC_INVENTORY_INTERFACE}));
     method.append(std::vector<std::string>({sampleInt}));
     auto reply = bus.call(method);
     reply.read(paths);
     return paths;
 }
 
-
 void ItemUpdater::createFirmwareUpdateInterface()
 {
-	auto allinventoryObjs = getInventoryObjects();
+    auto allinventoryObjs = getInventoryObjects();
 
-	for(auto it = allinventoryObjs.begin(); it != allinventoryObjs.end(); it++)
+    for (auto it = allinventoryObjs.begin(); it != allinventoryObjs.end(); it++)
     {
-		auto pos = it->rfind("/");
-		auto device = it->substr(pos + 1);
-		devices.push_back(device);
-        auto objPath =
-            std::string{SOFTWARE_OBJPATH} + "/" +  device;
+        auto pos = it->rfind("/");
+        auto device = it->substr(pos + 1);
+        devices.push_back(device);
+        auto objPath = std::string{SOFTWARE_OBJPATH} + "/" + device;
 
-        auto hostObjPtr =
-            std::make_unique<FirmwareUpdate>(bus, objPath, false);
+        auto hostObjPtr = std::make_unique<FirmwareUpdate>(bus, objPath, false);
         toBeUpdatedObj.insert(std::make_pair(device, std::move(hostObjPtr)));
     }
 }
