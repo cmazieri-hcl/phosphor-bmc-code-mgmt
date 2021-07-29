@@ -428,8 +428,8 @@ void Activation::onStateChangesBios(sdbusplus::message::message& msg)
             // Set Activation value to active
             activation(softwareServer::Activation::Activations::Active);
 
-            log<level::INFO>("Bios upgrade completed successfully.");
-            parent.biosVersion->version(
+            log<level::INFO>("Firmware upgrade completed successfully.");
+            parent.firmwareVersion->version(
                 parent.versions.find(versionId)->second->version());
         }
         else if (newStateResult == "failed")
@@ -437,7 +437,7 @@ void Activation::onStateChangesBios(sdbusplus::message::message& msg)
             // Set Activation value to Failed
             activation(softwareServer::Activation::Activations::Failed);
 
-            log<level::ERR>("Bios upgrade failed.");
+            log<level::ERR>("Firmware upgrade failed.");
         }
     }
 

@@ -37,6 +37,23 @@ using namespace phosphor::software::image;
 namespace fs = std::filesystem;
 using NotAllowed = sdbusplus::xyz::openbmc_project::Common::Error::NotAllowed;
 
+
+ItemUpdater::ItemUpdater(sdbusplus::bus::bus& bus, const std::string& path)
+    : ItemUpdaterInherit(bus, path.c_str(), false)
+    , bus(bus)
+    , helper(bus)
+    , versionMatch(bus, MatchRules::interfacesAdded()
+                        + MatchRules::path("/xyz/openbmc_project/software"),
+                   std::bind(std::mem_fn(&ItemUpdater::createActivation),
+                             this, std::placeholders::_1)
+                  )
+{
+    setBMCInventoryPath();
+    processBMCImage();
+    restoreFieldModeStatus();
+    emit_object_added();
+}
+
 void ItemUpdater::createActivation(sdbusplus::message::message& msg)
 {
 
@@ -64,13 +81,17 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
                 {
                     auto value = SVersion::convertVersionPurposeFromString(
                         std::get<std::string>(property.second));
-                    if (value == VersionPurpose::BMC ||
+                    if (value == VersionPurpose::BMC || value == VersionPurpose::System
 #ifdef HOST_FIRMWARE_UPGRADE
-                        value == VersionPurpose::Host ||
+                        || value == VersionPurpose::Host
 #endif
-                        value == VersionPurpose::System)
+                       )
                     {
                         purpose = value;
+#ifdef HOST_FIRMWARE_UPGRADE
+                        // save main image object path, children will be created for that
+                        topLevelFirmareobjectPath = path;
+#endif
                     }
                 }
                 else if (property.first == "Version")
@@ -768,18 +789,18 @@ void ItemUpdater::createFirmwareObject()
     auto versionId = path.substr(pos + 1);
     auto version = "null";
     AssociationList assocs = {};
-    biosActivation = std::make_unique<Activation>(
+    firmwareActivation = std::make_unique<Activation>(
         bus, path, *this, versionId, server::Activation::Activations::Active,
         assocs);
     auto dummyErase = [](std::string /*entryId*/) {
         // Do nothing;
     };
-    biosVersion = std::make_unique<VersionClass>(
+    firmwareVersion = std::make_unique<VersionClass>(
         bus, path, version, VersionPurpose::Host, "", "",
         std::bind(dummyErase, std::placeholders::_1));
-    biosVersion->deleteObject =
+    firmwareVersion->deleteObject =
         std::make_unique<phosphor::software::manager::Delete>(bus, path,
-                                                              *biosVersion);
+                                                              *firmwareVersion);
 }
 #endif
 

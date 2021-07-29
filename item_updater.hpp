@@ -51,22 +51,7 @@ class ItemUpdater : public ItemUpdaterInherit
      *
      * @param[in] bus    - The D-Bus bus object
      */
-    ItemUpdater(sdbusplus::bus::bus& bus, const std::string& path) :
-        ItemUpdaterInherit(bus, path.c_str(), false), bus(bus), helper(bus),
-        versionMatch(bus,
-                     MatchRules::interfacesAdded() +
-                         MatchRules::path("/xyz/openbmc_project/software"),
-                     std::bind(std::mem_fn(&ItemUpdater::createActivation),
-                               this, std::placeholders::_1))
-    {
-        setBMCInventoryPath();
-        processBMCImage();
-        restoreFieldModeStatus();
-#ifdef HOST_FIRMWARE_UPGRADE
-        createFirmwareObject();
-#endif
-        emit_object_added();
-    };
+    ItemUpdater(sdbusplus::bus::bus& bus, const std::string& path);
 
     /** @brief Save priority value to persistent storage (flash and optionally
      *  a U-Boot environment variable)
@@ -267,11 +252,13 @@ class ItemUpdater : public ItemUpdaterInherit
     void createFirmwareObject();
 
     /** @brief Persistent Activation D-Bus object for Firmware */
-    std::unique_ptr<Activation> biosActivation;
+    std::unique_ptr<Activation> firmwareActivation;
+
+    std::string topLevelFirmareobjectPath;
 
   public:
     /** @brief Persistent Version D-Bus object for Firmware */
-    std::unique_ptr<VersionClass> biosVersion;
+    std::unique_ptr<VersionClass> firmwareVersion;
 #endif
 };
 
