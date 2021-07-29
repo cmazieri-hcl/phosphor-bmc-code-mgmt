@@ -243,8 +243,8 @@ class Activation : public ActivationInherit, public Flash
     /* @brief write to Host flash function */
     void flashWriteHost();
 
-    /** @brief Function that acts on Bios upgrade service file state changes */
-    void onStateChangesBios(sdbusplus::message::message&);
+    /** @brief Function that acts on Firmware upgrade service file state changes */
+    void onStateChangesFirmware(sdbusplus::message::message&);
 #endif
 
     /** @brief Overloaded function that acts on service file state changes */

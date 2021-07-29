@@ -296,7 +296,7 @@ void Activation::unitStateChange(sdbusplus::message::message& msg)
     auto purpose = parent.versions.find(versionId)->second->purpose();
     if (purpose == VersionPurpose::Host)
     {
-        onStateChangesBios(msg);
+        onStateChangesFirmware(msg);
         return;
     }
 #endif
@@ -387,20 +387,20 @@ void Activation::flashWriteHost()
 {
     auto method = bus.new_method_call(SYSTEMD_BUSNAME, SYSTEMD_PATH,
                                       SYSTEMD_INTERFACE, "StartUnit");
-    auto biosServiceFile = "obmc-flash-host-bios@" + versionId + ".service";
-    method.append(biosServiceFile, "replace");
+    auto FirmwareServiceFile = "obmc-flash-host-firmware@" + versionId + ".service";
+    method.append(FirmwareServiceFile, "replace");
     try
     {
         auto reply = bus.call(method);
     }
     catch (const SdBusError& e)
     {
-        log<level::ERR>("Error in trying to upgrade Host Bios.");
+        log<level::ERR>("Error in trying to upgrade Host Firmware.");
         report<InternalFailure>();
     }
 }
 
-void Activation::onStateChangesBios(sdbusplus::message::message& msg)
+void Activation::onStateChangesFirmware(sdbusplus::message::message& msg)
 {
     uint32_t newStateID{};
     sdbusplus::message::object_path newStateObjPath;
@@ -410,9 +410,9 @@ void Activation::onStateChangesBios(sdbusplus::message::message& msg)
     // Read the msg and populate each variable
     msg.read(newStateID, newStateObjPath, newStateUnit, newStateResult);
 
-    auto biosServiceFile = "obmc-flash-host-bios@" + versionId + ".service";
+    auto FirmwareServiceFile = "obmc-flash-host-firmware@" + versionId + ".service";
 
-    if (newStateUnit == biosServiceFile)
+    if (newStateUnit == FirmwareServiceFile)
     {
         // unsubscribe to systemd signals
         unsubscribeFromSystemdSignals();
