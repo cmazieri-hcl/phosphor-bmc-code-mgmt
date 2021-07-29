@@ -1,0 +1,15 @@
+description: >
+             Some simple method that exposes a method on dbus
+properties:
+    - name: Update
+      type: boolean
+      default: false
+      description: >
+        The host identifier for software update, if true it means firmare update is set to happen 
+    - name: State
+      type: string
+      flags:
+             - readonly
+      description: >
+               Starts with None, when the update starts it changes to OnGoing, then reaches Done
+

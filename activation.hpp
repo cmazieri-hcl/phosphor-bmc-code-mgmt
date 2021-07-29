@@ -239,7 +239,7 @@ class Activation : public ActivationInherit, public Flash
      */
     void onFlashWriteSuccess();
 
-#ifdef HOST_BIOS_UPGRADE
+#ifdef HOST_FIRMWARE_UPGRADE
     /* @brief write to Host flash function */
     void flashWriteHost();
 

@@ -53,7 +53,7 @@ conf.set('UBIFS_LAYOUT', get_option('bmc-layout').contains('ubi'))
 conf.set('MMC_LAYOUT', get_option('bmc-layout').contains('mmc'))
 
 # Configurable features
-conf.set('HOST_BIOS_UPGRADE', get_option('host-bios-upgrade').enabled())
+conf.set('HOST_FIRMWARE_UPGRADE', get_option('host-firmware-upgrade').enabled())
 conf.set('WANT_SIGNATURE_VERIFY', \
     get_option('verify-signature').enabled() or \
     get_option('verify-full-signature').enabled())
@@ -79,8 +79,8 @@ conf.set_quoted('SYNC_LIST_FILE_NAME', get_option('sync-list-file-name'))
 conf.set_quoted('BMC_MSL', get_option('bmc-msl'))
 conf.set_quoted('REGEX_BMC_MSL', get_option('regex-bmc-msl'))
 
-if get_option('host-bios-upgrade').enabled()
-    conf.set_quoted('BIOS_OBJPATH', get_option('bios-object-path'))
+if get_option('host-firmware-upgrade').enabled()
+    conf.set_quoted('FIRMWARE_OBJPATH', get_option('firmware-object-path'))
 endif
 
 configure_file(output: 'config.h', configuration: conf)
@@ -110,6 +110,7 @@ unit_files = [
 
 sdbuspp = find_program('sdbus++')
 subdir('xyz/openbmc_project/Software/Image')
+subdir('xyz/openbmc_project/Software/FirmwareUpdate')
 
 image_updater_sources = files(
     'activation.cpp',
@@ -119,7 +120,8 @@ image_updater_sources = files(
     'serialize.cpp',
     'version.cpp',
     'utils.cpp',
-    'msl_verify.cpp'
+    'msl_verify.cpp',
+    'firmwareUpdate.cpp',
 )
 
 if get_option('bmc-layout').contains('static')
@@ -158,8 +160,8 @@ elif get_option('bmc-layout').contains('mmc')
     ]
 endif
 
-if get_option('host-bios-upgrade').enabled()
-    unit_files += 'obmc-flash-host-bios@.service.in'
+if get_option('host-firmware-upgrade').enabled()
+    unit_files += 'obmc-flash-host-firmware@.service.in'
 endif
 
 if get_option('sync-bmc-files').enabled()
@@ -198,6 +200,8 @@ executable(
     'phosphor-image-updater',
     image_error_cpp,
     image_error_hpp,
+    firmware_update_server_hpp,
+    firmware_update_server_cpp,
     image_updater_sources,
     dependencies: [deps, ssl],
     install: true

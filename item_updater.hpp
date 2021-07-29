@@ -62,8 +62,8 @@ class ItemUpdater : public ItemUpdaterInherit
         setBMCInventoryPath();
         processBMCImage();
         restoreFieldModeStatus();
-#ifdef HOST_BIOS_UPGRADE
-        createBIOSObject();
+#ifdef HOST_FIRMWARE_UPGRADE
+        createFirmwareObject();
 #endif
         emit_object_added();
     };
@@ -257,20 +257,20 @@ class ItemUpdater : public ItemUpdaterInherit
     bool checkImage(const std::string& filePath,
                     const std::vector<std::string>& imageList);
 
-#ifdef HOST_BIOS_UPGRADE
-    /** @brief Create the BIOS object without knowing the version.
+#ifdef HOST_FIRMWARE_UPGRADE
+    /** @brief Create the Firmware object without knowing the version.
      *
      *  The object is created only to provide the DBus access so that an
-     *  external service could set the correct BIOS version.
-     *  On BIOS code update, the version is updated accordingly.
+     *  external service could set the correct Firmware version.
+     *  On Firmware code update, the version is updated accordingly.
      */
-    void createBIOSObject();
+    void createFirmwareObject();
 
-    /** @brief Persistent Activation D-Bus object for BIOS */
+    /** @brief Persistent Activation D-Bus object for Firmware */
     std::unique_ptr<Activation> biosActivation;
 
   public:
-    /** @brief Persistent Version D-Bus object for BIOS */
+    /** @brief Persistent Version D-Bus object for Firmware */
     std::unique_ptr<VersionClass> biosVersion;
 #endif
 };

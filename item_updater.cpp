@@ -65,7 +65,7 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
                     auto value = SVersion::convertVersionPurposeFromString(
                         std::get<std::string>(property.second));
                     if (value == VersionPurpose::BMC ||
-#ifdef HOST_BIOS_UPGRADE
+#ifdef HOST_FIRMWARE_UPGRADE
                         value == VersionPurpose::Host ||
 #endif
                         value == VersionPurpose::System)
@@ -749,16 +749,16 @@ bool ItemUpdater::checkImage(const std::string& filePath,
     return valid;
 }
 
-#ifdef HOST_BIOS_UPGRADE
-void ItemUpdater::createBIOSObject()
+#ifdef HOST_FIRMWARE_UPGRADE
+void ItemUpdater::createFirmwareObject()
 {
-    std::string path = BIOS_OBJPATH;
+    std::string path = FIRMWARE_OBJPATH;
     // Get version id from last item in the path
     auto pos = path.rfind("/");
     if (pos == std::string::npos)
     {
         log<level::ERR>("No version id found in object path",
-                        entry("BIOS_OBJPATH=%s", path.c_str()));
+                        entry("FIRMWARE_OBJPATH=%s", path.c_str()));
         return;
     }
 

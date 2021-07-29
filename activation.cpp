@@ -102,7 +102,7 @@ auto Activation::activation(Activations value) -> Activations
         }
 #endif
 
-#ifdef HOST_BIOS_UPGRADE
+#ifdef HOST_FIRMWARE_UPGRADE
         auto purpose = parent.versions.find(versionId)->second->purpose();
         if (purpose == VersionPurpose::Host)
         {
@@ -292,7 +292,7 @@ void Activation::unitStateChange(sdbusplus::message::message& msg)
         return;
     }
 
-#ifdef HOST_BIOS_UPGRADE
+#ifdef HOST_FIRMWARE_UPGRADE
     auto purpose = parent.versions.find(versionId)->second->purpose();
     if (purpose == VersionPurpose::Host)
     {
@@ -382,7 +382,7 @@ bool Activation::checkApplyTimeImmediate()
     return false;
 }
 
-#ifdef HOST_BIOS_UPGRADE
+#ifdef HOST_FIRMWARE_UPGRADE
 void Activation::flashWriteHost()
 {
     auto method = bus.new_method_call(SYSTEMD_BUSNAME, SYSTEMD_PATH,
