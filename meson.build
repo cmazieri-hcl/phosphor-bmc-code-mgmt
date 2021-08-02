@@ -122,6 +122,7 @@ image_updater_sources = files(
     'utils.cpp',
     'msl_verify.cpp',
     'firmwareUpdate.cpp',
+    'hostimagetype.cpp',
 )
 
 if get_option('bmc-layout').contains('static')
@@ -262,6 +263,7 @@ if not build_tests.disabled()
         'utils.cpp',
         'image_verify.cpp',
         'images.cpp',
+        'hostimagetype.cpp',
         'version.cpp']
     )
 
@@ -269,6 +271,7 @@ if not build_tests.disabled()
         executable(
             'utest',
             './test/utest.cpp',
+            './test/hostimagetypetest.cpp',
             link_args: dynamic_linker,
             build_rpath: get_option('oe-sdk').enabled() ? rpath : '',
             dependencies: [deps, gtest, include_srcs, ssl]
