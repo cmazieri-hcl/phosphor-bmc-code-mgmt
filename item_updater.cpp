@@ -1,6 +1,9 @@
 #include "config.h"
+#include <sdbusplus/bus.hpp>
+
 
 #include "item_updater.hpp"
+#include "hostimagetype.hpp"
 
 #include "images.hpp"
 #include "serialize.hpp"
@@ -11,14 +14,16 @@
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/log.hpp>
-#include <xyz/openbmc_project/Common/error.hpp>
-#include <xyz/openbmc_project/Software/Image/error.hpp>
+#include "xyz/openbmc_project/Common/error.hpp"
+#include "xyz/openbmc_project/Software/Image/error.hpp"
+
 
 #include <filesystem>
 #include <fstream>
 #include <queue>
 #include <set>
 #include <string>
+#include <boost/algorithm/string.hpp>
 
 namespace phosphor
 {
@@ -70,6 +75,7 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
     msg.read(objPath, interfaces);
     std::string path(std::move(objPath));
     std::string filePath;
+    std::string topLevelFirmareHostObjectPath;
 
     for (const auto& intf : interfaces)
     {
@@ -81,18 +87,18 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
                 {
                     auto value = SVersion::convertVersionPurposeFromString(
                         std::get<std::string>(property.second));
-                    if (value == VersionPurpose::BMC || value == VersionPurpose::System
+                    if (value == VersionPurpose::BMC || value == VersionPurpose::System)
+                    {
+                         purpose = value;
+                    }
 #ifdef HOST_FIRMWARE_UPGRADE
-                        || value == VersionPurpose::Host
-#endif
-                       )
+                    else if (value == VersionPurpose::Host)
                     {
                         purpose = value;
-#ifdef HOST_FIRMWARE_UPGRADE
                         // save main image object path, children will be created for that
-                        topLevelFirmareobjectPath = path;
-#endif
+                        topLevelFirmareHostObjectPath = path;
                     }
+#endif                 
                 }
                 else if (property.first == "Version")
                 {
@@ -171,6 +177,13 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
             std::make_unique<phosphor::software::manager::Delete>(bus, path,
                                                                   *versionPtr);
         versions.insert(std::make_pair(versionId, std::move(versionPtr)));
+#ifdef HOST_FIRMWARE_UPGRADE
+        if (topLevelFirmareHostObjectPath.empty() == false)
+        {
+            createFirmwareObjectTree(topLevelFirmareHostObjectPath, filePath);
+            topLevelFirmareHostObjectPath.clear();
+        }
+#endif
     }
     return;
 }
@@ -771,36 +784,85 @@ bool ItemUpdater::checkImage(const std::string& filePath,
 }
 
 #ifdef HOST_FIRMWARE_UPGRADE
-void ItemUpdater::createFirmwareObject()
-{
-    std::string path = FIRMWARE_OBJPATH;
-    // Get version id from last item in the path
-    auto pos = path.rfind("/");
-    if (pos == std::string::npos)
+void ItemUpdater::createFirmwareObjectTree(const std::string& mainImageObjectPath,
+                                           const std::string& imageDirPath)
+{  
+    auto firmwarePath = mainImageObjectPath;
+    // store the path objects related to image type (usually one if a image type can be detected)
+    std::vector<std::string> imageTypesToCreateObjects;
+    // store path objects if machine is multi hosts
+    std::vector<std::string> hostsToCreateObjects;
+    if (isMultiHostMachine())
     {
-        log<level::ERR>("No version id found in object path",
-                        entry("FIRMWARE_OBJPATH=%s", path.c_str()));
-        return;
+        boost::split(hostsToCreateObjects, OBMC_HOST_INSTANCES, boost::is_any_of(" "));
     }
 
-    createActiveAssociation(path);
-    createFunctionalAssociation(path);
+    // try to detect the image type and the binary image file
+    HostImageType imageType(imageDirPath);
+    std::string msg = "firmware image file is '"  + imageType.imageFile() + '\'';
+    log<level::INFO>(msg.c_str());
 
-    auto versionId = path.substr(pos + 1);
-    auto version = "null";
-    AssociationList assocs = {};
-    firmwareActivation = std::make_unique<Activation>(
-        bus, path, *this, versionId, server::Activation::Activations::Active,
-        assocs);
-    auto dummyErase = [](std::string /*entryId*/) {
-        // Do nothing;
-    };
-    firmwareVersion = std::make_unique<VersionClass>(
-        bus, path, version, VersionPurpose::Host, "", "",
-        std::bind(dummyErase, std::placeholders::_1));
-    firmwareVersion->deleteObject =
-        std::make_unique<phosphor::software::manager::Delete>(bus, path,
-                                                              *firmwareVersion);
+    auto  imageTypeId = imageType.curTypeString();
+    std::vector<std::string> typesToCreate;
+    if (imageTypeId.empty() == false)
+    {   // only one image type
+        typesToCreate.push_back(imageTypeId);
+        msg = "Firmware image type: '" + imageType.curTypeString()+ '\'';
+        log<level::INFO>(msg.c_str());     
+    }
+    else
+    {   /*
+         * create objects for all image types and give responsability to the user
+         */
+        log<level::WARNING>("Firmware image type NOT detected");        
+        typesToCreate  = HostImageType::availableTypes();
+    }
+    for(size_t counter=0; counter < typesToCreate.size(); ++counter)
+    {
+        imageTypesToCreateObjects.push_back(firmwarePath + '/' + typesToCreate.at(counter));
+    }
+    // create a container object to store all necessary information
+    auto hostImageData = std::make_unique<FirmwareImageUpdateData>(imageType.curTypeString(),
+                                                                   imageType.imageFile());
+    for (size_t types=0; types < imageTypesToCreateObjects.size(); ++types)
+    {
+        if (hostsToCreateObjects.size() == 0)
+        {
+            createSingleFirmwareObject(imageTypesToCreateObjects.at(types),
+                                       hostImageData.get());
+        }
+        else
+            for (size_t hosts=0; hosts < hostsToCreateObjects.size(); ++hosts)
+            {
+                createSingleFirmwareObject(imageTypesToCreateObjects.at(types)
+                                           + '/' + hostsToCreateObjects.at(hosts),
+                                           hostImageData.get());
+            }
+    }
+    // store the information for an image
+    this->hostFirmwareObjects.insert(std::make_pair(imageDirPath, std::move(hostImageData)));
+}
+
+
+void ItemUpdater::createSingleFirmwareObject(const std::string &pathObject,
+                                             FirmwareImageUpdateData *container)
+{
+    auto object = std::make_unique<FirmwareUpdate>(bus, pathObject);
+    container->pathObjects.push_back(std::move(object));
+    std::string msg = "creating object path: " + pathObject;
+    log<level::INFO>(msg.c_str());
+}
+
+bool ItemUpdater::isMultiHostMachine() const
+{
+    bool multihost = false;  // single host is the default
+#if defined(OBMC_HOST_INSTANCES)
+    if (::strcmp("0", OBMC_HOST_INSTANCES) != 0 && ::strchr(OBMC_HOST_INSTANCES, ' '))
+    {
+        multihost = true;
+    }
+#endif
+    return multihost;
 }
 #endif
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "activation.hpp"
+#include "hostfirmwareobjectsmap.hpp"
 #include "item_updater_helper.hpp"
 #include "version.hpp"
 #include "xyz/openbmc_project/Collection/DeleteAll/server.hpp"
@@ -9,6 +10,7 @@
 #include <xyz/openbmc_project/Association/Definitions/server.hpp>
 #include <xyz/openbmc_project/Common/FactoryReset/server.hpp>
 #include <xyz/openbmc_project/Control/FieldMode/server.hpp>
+#include "xyz/openbmc_project/Software/FirmwareUpdate/server.hpp"
 
 #include <string>
 #include <vector>
@@ -249,12 +251,13 @@ class ItemUpdater : public ItemUpdaterInherit
      *  external service could set the correct Firmware version.
      *  On Firmware code update, the version is updated accordingly.
      */
-    void createFirmwareObject();
+    void createFirmwareObjectTree(const std::string& mainImageObjectPath,
+                                  const std::string& imageDirPath);
+    bool isMultiHostMachine() const;
+    void createSingleFirmwareObject(const std::string& pathObject,
+                                    FirmwareImageUpdateData *container);
 
-    /** @brief Persistent Activation D-Bus object for Firmware */
-    std::unique_ptr<Activation> firmwareActivation;
-
-    std::string topLevelFirmareobjectPath;
+    HostFirmwareObjectsMap  hostFirmwareObjects;
 
   public:
     /** @brief Persistent Version D-Bus object for Firmware */

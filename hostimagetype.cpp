@@ -81,6 +81,11 @@ std::string HostImageType::type(Type id)
     return ret;
 }
 
+std::vector<std::string> HostImageType::availableTypes()
+{
+    return HostImageType::m_types;
+}
+
 std::string HostImageType::curTypeString() const
 {
     return HostImageType::type(m_imageTypeId);
