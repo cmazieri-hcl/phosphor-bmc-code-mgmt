@@ -109,3 +109,8 @@ option(
     value: '/xyz/openbmc_project/software/firmware',
     description: 'The firmware DBus object path.',
 )
+
+option('obmc_host_instances', type: 'string',
+    value: '0',
+    description: 'When not 0, it must contains the list of host ids',
+)

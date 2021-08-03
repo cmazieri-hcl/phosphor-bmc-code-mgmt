@@ -79,6 +79,10 @@ conf.set_quoted('SYNC_LIST_FILE_NAME', get_option('sync-list-file-name'))
 conf.set_quoted('BMC_MSL', get_option('bmc-msl'))
 conf.set_quoted('REGEX_BMC_MSL', get_option('regex-bmc-msl'))
 
+## Machine layer must set a meson option such as -Dobmc_host_instances="${OBMC_HOST_INSTANCES}"
+##
+conf.set_quoted('OBMC_HOST_INSTANCES', get_option('obmc_host_instances'))
+
 if get_option('host-firmware-upgrade').enabled()
     conf.set_quoted('FIRMWARE_OBJPATH', get_option('firmware-object-path'))
 endif
