@@ -125,7 +125,7 @@ image_updater_sources = files(
     'version.cpp',
     'utils.cpp',
     'msl_verify.cpp',
-    'firmwareUpdate.cpp',
+    'firmwareupdate.cpp',
     'hostimagetype.cpp',
 )
 
