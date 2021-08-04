@@ -14,12 +14,14 @@
 // limitations under the License.
 */
 
+#pragma once
 
-#include "firmwareUpdate.hpp"
+#include "xyz/openbmc_project/Software/FirmwareUpdate/server.hpp"
 
-const std::string NoneState{"None"};
-const std::string OnGoingState{"OnGoing"};
-const std::string DoneState{"Done"};
+#include <sdbusplus/bus.hpp>
+
+#include <functional>
+#include <string>
 
 namespace phosphor
 {
@@ -28,36 +30,42 @@ namespace software
 namespace updater
 {
 
-FirmwareUpdate::FirmwareUpdate(sdbusplus::bus::bus& bus,
-                               const std::string& objPath)
-    :  FirmwareUpdateInherit(bus, (objPath).c_str(), true)
-{
-    setUpdateRequired();
-    emit_object_added();   // Emit deferred signal
-}
+using FirmwareUpdateInherit = sdbusplus::server::object::object<
+    sdbusplus::xyz::openbmc_project::Software::server::FirmwareUpdate>;
 
-
-void FirmwareUpdate::setUpdateRequired()
+class FirmwareUpdate : public FirmwareUpdateInherit
 {
-    FirmwareUpdateInherit::update(true, true);  // skip signal
-    FirmwareUpdateInherit::state(NoneState, true);
-}
+  public:   
+    /** @brief Constructs FirmwareUpdate Software Manager
+     *
+     * @param[in] bus            - The D-Bus bus object
+     * @param[in] objPath        - The D-Bus object path
+     * @param[in] toBeUpdated    - The bool value
+     */
+    FirmwareUpdate(sdbusplus::bus::bus& bus,
+                   const std::string& objPath);
 
-void FirmwareUpdate::setUpdateCompleted()
-{
-    FirmwareUpdateInherit::update(false, true);
-    FirmwareUpdateInherit::state(DoneState, true);
-}
+    /**
+     * @brief Sets properties saying the update is required
+     */
+    void setUpdateRequired();
 
-void FirmwareUpdate::setUpdateOnGoing()
-{
-   FirmwareUpdateInherit::state(OnGoingState, true);
-}
+    /**
+     * @brief  Sets properties saying the update is performed
+     */
+    void setUpdateCompleted();
 
-bool FirmwareUpdate::isFirmwareUpdated() const
-{
-    return FirmwareUpdateInherit::state() == DoneState;
-}
+    /**
+     * @brief Sets properties saying the update is ongoing
+     */
+    void setUpdateOnGoing();
+
+    /**
+     * @brief isFirmwareUpdated
+     * @return true when state is Done saying the image update has been performed
+     */
+    bool isFirmwareUpdated() const;
+};
 
 } // namespace updater
 } // namespace software

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "firmwareUpdate.hpp"
+#include "firmwareupdate.hpp"
 #include <string>
 #include <vector>
 #include <map>

@@ -15,7 +15,7 @@
 */
 
 
-#include "firmwareUpdate.hpp"
+#include "firmwareupdate.hpp"
 
 const std::string NoneState{"None"};
 const std::string OnGoingState{"OnGoing"};
