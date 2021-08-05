@@ -36,12 +36,18 @@ namespace updater
 struct  FirmwareImageUpdateData
 {
     FirmwareImageUpdateData(const std::string& img_type, const std::string& bin_file)
-    : image_type(img_type), image_binay_file(bin_file)
+      : image_type(img_type)
+      , image_binay_file(bin_file)
+      , hostsToUpdate(0)
     {
         // empty
-    }  
+    }
+    FirmwareImageUpdateData()=delete;
+    FirmwareImageUpdateData(const FirmwareImageUpdateData&)=delete;
+    FirmwareImageUpdateData& operator=(const FirmwareImageUpdateData&)=delete;
     const std::string                            image_type;
     const std::string                            image_binay_file;
+    int                                          hostsToUpdate;
     std::vector<std::unique_ptr<FirmwareUpdate>> pathObjects;
 };
 
