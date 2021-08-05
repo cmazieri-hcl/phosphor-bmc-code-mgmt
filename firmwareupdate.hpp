@@ -61,10 +61,28 @@ class FirmwareUpdate : public FirmwareUpdateInherit
     void setUpdateOnGoing();
 
     /**
+     * @brief isUpdateRequired
+     * @return true when 'Update' property is set to true
+     */
+    bool isUpdateRequired() const;
+
+    /**
      * @brief isFirmwareUpdated
      * @return true when state is Done saying the image update has been performed
      */
     bool isFirmwareUpdated() const;
+
+    /**
+     * @brief hostObjectPath()
+     * @return the object having at least the image type
+     *         multi host machines will have the host id as the last element
+     *
+     */
+    const std::string hostObjectPath() const;
+
+private:
+    /** @brief store host object path */
+    const std::string  _hostObjPath;
 };
 
 } // namespace updater

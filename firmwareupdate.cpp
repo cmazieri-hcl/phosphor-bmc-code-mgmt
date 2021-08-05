@@ -16,6 +16,8 @@
 
 
 #include "firmwareupdate.hpp"
+#include <phosphor-logging/log.hpp>
+#include <sdbusplus/bus/match.hpp>
 
 const std::string NoneState{"None"};
 const std::string OnGoingState{"OnGoing"};
@@ -28,11 +30,15 @@ namespace software
 namespace updater
 {
 
+using namespace phosphor::logging;
+
 FirmwareUpdate::FirmwareUpdate(sdbusplus::bus::bus& bus,
                                const std::string& objPath)
-    :  FirmwareUpdateInherit(bus, (objPath).c_str(), true)
-{
-    setUpdateRequired();
+    : FirmwareUpdateInherit(bus, (objPath).c_str(), true)
+    , _hostObjPath(objPath)
+{  
+    FirmwareUpdateInherit::update(false, true);
+    FirmwareUpdateInherit::state(NoneState, true);
     emit_object_added();   // Emit deferred signal
 }
 
@@ -51,13 +57,24 @@ void FirmwareUpdate::setUpdateCompleted()
 
 void FirmwareUpdate::setUpdateOnGoing()
 {
-   FirmwareUpdateInherit::state(OnGoingState, true);
+    FirmwareUpdateInherit::state(OnGoingState, true);
+}
+
+bool FirmwareUpdate::isUpdateRequired() const
+{
+    return FirmwareUpdateInherit::update();
 }
 
 bool FirmwareUpdate::isFirmwareUpdated() const
 {
     return FirmwareUpdateInherit::state() == DoneState;
 }
+
+const std::string FirmwareUpdate::hostObjectPath() const
+{
+    return _hostObjPath;
+}
+
 
 } // namespace updater
 } // namespace software
