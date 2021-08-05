@@ -103,25 +103,34 @@ auto Activation::activation(Activations value) -> Activations
 #endif
 
 #ifdef HOST_FIRMWARE_UPGRADE
-        auto purpose = parent.versions.find(versionId)->second->purpose();
+        auto purpose = parent.versions.find(versionId)->second->purpose();      
         if (purpose == VersionPurpose::Host)
         {
-            if (!activationProgress)
+            if (activationProgress == nullptr)
             {
                 activationProgress =
                     std::make_unique<ActivationProgress>(bus, path);
-            }
+            }         
 
-            // Enable systemd signals
-            subscribeToSystemdSignals();
+           auto hostsUpdateInfo = parent.canPerformUpdateFirmware(path);
+           if (hostsUpdateInfo != nullptr)
+           {
+               std::string msg = "preparing to update firmware from "
+                                + std::to_string(hostsUpdateInfo->hostsToUpdate)
+                                + " host(s)";
+               log<level::INFO>(msg.c_str());
+               // Enable systemd signals
+               subscribeToSystemdSignals();
 
-            // Set initial progress
-            activationProgress->progress(20);
+               // Set initial progress
+               activationProgress->progress(2);
 
-            // Initiate image writing to flash
-            flashWriteHost();
-
-            return softwareServer::Activation::activation(value);
+               // Initiate image writing to flash
+               flashWriteHost(hostsUpdateInfo);
+               return softwareServer::Activation::activation(value);
+           }
+           return softwareServer::Activation::activation(
+                    softwareServer::Activation::Activations::Failed);
         }
 #endif
 
@@ -383,7 +392,7 @@ bool Activation::checkApplyTimeImmediate()
 }
 
 #ifdef HOST_FIRMWARE_UPGRADE
-void Activation::flashWriteHost()
+void Activation::flashWriteHost(const FirmwareImageUpdateData *)
 {
     auto method = bus.new_method_call(SYSTEMD_BUSNAME, SYSTEMD_PATH,
                                       SYSTEMD_INTERFACE, "StartUnit");

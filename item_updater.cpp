@@ -840,7 +840,9 @@ void ItemUpdater::createFirmwareObjectTree(const std::string& mainImageObjectPat
             }
     }
     // store the information for an image
-    this->hostFirmwareObjects.insert(std::make_pair(imageDirPath, std::move(hostImageData)));
+    msg = "creating hosts information for the image " + mainImageObjectPath;
+    log<level::INFO>(msg.c_str());
+    this->hostFirmwareObjects.insert(std::make_pair(mainImageObjectPath, std::move(hostImageData))); 
 }
 
 
@@ -851,6 +853,50 @@ void ItemUpdater::createSingleFirmwareObject(const std::string &pathObject,
     container->pathObjects.push_back(std::move(object));
     std::string msg = "creating object path: " + pathObject;
     log<level::INFO>(msg.c_str());
+}
+
+const FirmwareImageUpdateData *
+ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
+{
+    std::string  msg;
+    auto hostImageData = this->hostFirmwareObjects.find(imagePath)->second.get();
+    if (hostImageData == nullptr)
+    {
+        msg = "firmware update information not found for image "
+                          +  imagePath;
+        log<level::EMERG>(msg.c_str());
+        return nullptr;
+    }
+    if (hostImageData->image_binay_file.empty() == true)
+    {
+        msg = "binary image file unkown for the image id "
+                               +  imagePath;
+        log<level::EMERG>(msg.c_str());
+        return nullptr;
+    }
+    // special case: single host with image type does not require 'Update' property being true
+    if (isMultiHostMachine() == false
+            && hostImageData->image_type.empty() == false
+            && hostImageData->pathObjects.size() == 1)
+    {
+        hostImageData->pathObjects.at(0)->setUpdateRequired();
+    }
+    auto counter = hostImageData->pathObjects.size();
+    while (counter-- > 0)
+    {
+        // that is the case, there is at least one host set
+        if (hostImageData->pathObjects.at(counter)->isUpdateRequired())
+        {
+            hostImageData->hostsToUpdate++;
+        }
+    }
+    if (hostImageData->hostsToUpdate == 0)
+    {
+        msg = imagePath + " at least one host needs to have the property 'Update' set to true";
+        log<level::ERR>(msg.c_str());
+        return nullptr;
+    }
+    return hostImageData;
 }
 
 bool ItemUpdater::isMultiHostMachine() const

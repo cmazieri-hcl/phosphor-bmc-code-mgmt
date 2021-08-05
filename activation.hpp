@@ -27,6 +27,8 @@ namespace updater
 namespace fs = std::filesystem;
 #endif
 
+class FirmwareImageUpdateData;
+
 using AssociationList =
     std::vector<std::tuple<std::string, std::string, std::string>>;
 using ActivationInherit = sdbusplus::server::object::object<
@@ -241,7 +243,7 @@ class Activation : public ActivationInherit, public Flash
 
 #ifdef HOST_FIRMWARE_UPGRADE
     /* @brief write to Host flash function */
-    void flashWriteHost();
+    void flashWriteHost(const FirmwareImageUpdateData* hostImageData);
 
     /** @brief Function that acts on Firmware upgrade service file state changes */
     void onStateChangesFirmware(sdbusplus::message::message&);

@@ -257,11 +257,14 @@ class ItemUpdater : public ItemUpdaterInherit
     void createSingleFirmwareObject(const std::string& pathObject,
                                     FirmwareImageUpdateData *container);
 
-    HostFirmwareObjectsMap  hostFirmwareObjects;
-
   public:
     /** @brief Persistent Version D-Bus object for Firmware */
     std::unique_ptr<VersionClass> firmwareVersion;
+    /** @brief Persistent Hosts Object mapping */
+    HostFirmwareObjectsMap  hostFirmwareObjects;
+
+    const FirmwareImageUpdateData *
+          canPerformUpdateFirmware(const std::string &imagePath);
 #endif
 };
 
