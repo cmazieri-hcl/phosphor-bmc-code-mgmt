@@ -44,8 +44,8 @@ struct  FirmwareImageUpdateData
     }
     FirmwareImageUpdateData()=delete;
     FirmwareImageUpdateData(const FirmwareImageUpdateData&)=delete;
-    FirmwareImageUpdateData& operator=(const FirmwareImageUpdateData&)=delete;
-    const std::string                            image_type;
+    FirmwareImageUpdateData& operator=(const FirmwareImageUpdateData&)=delete;   
+    std::string                                  image_type;
     const std::string                            image_binay_file;
     int                                          hostsToUpdate;
     std::vector<std::unique_ptr<FirmwareUpdate>> pathObjects;

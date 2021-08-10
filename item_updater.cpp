@@ -855,7 +855,7 @@ void ItemUpdater::createSingleFirmwareObject(const std::string &pathObject,
     log<level::INFO>(msg.c_str());
 }
 
-const FirmwareImageUpdateData *
+FirmwareImageUpdateData *
 ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
 {
     std::string  msg;
@@ -881,12 +881,35 @@ ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
     {
         hostImageData->pathObjects.at(0)->setUpdateRequired();
     }
-    auto counter = hostImageData->pathObjects.size();
+    auto counter = hostImageData->pathObjects.size();  
     while (counter-- > 0)
-    {
-        // that is the case, there is at least one host set
+    {        
+        // make sure the image type is correct,
+        // when it is unknown the user is expected to set that using set-propety over the right object path
         if (hostImageData->pathObjects.at(counter)->isUpdateRequired())
         {
+            // get the image from object path
+            auto str = hostImageData->pathObjects.at(counter)->hostObjectPath();
+            auto slash_position = str.find_last_of('/');
+            if (isMultiHostMachine() == true)
+            {
+                str.erase(slash_position, str.size() - slash_position);
+                slash_position = str.find_last_of('/');
+            }
+            std::string image_type = str.substr(slash_position+1, str.size() - slash_position -1);
+            if (hostImageData->image_type.empty() == true)
+            {
+                hostImageData->image_type = image_type;
+            }
+            else
+            {
+                if (image_type != hostImageData->image_type)
+                {
+                    msg = imagePath + " different image-types have the property 'Update' set to true";
+                    log<level::ERR>(msg.c_str());
+                    return nullptr;
+                }
+            }
             hostImageData->hostsToUpdate++;
         }
     }
@@ -896,6 +919,13 @@ ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
         log<level::ERR>(msg.c_str());
         return nullptr;
     }
+    if (hostImageData->image_type.empty() == true)
+    {
+        msg = imagePath + " Could not determine the image type";
+        log<level::ERR>(msg.c_str());
+        return nullptr;
+    }
+    // OK to perform the host firmware update
     return hostImageData;
 }
 

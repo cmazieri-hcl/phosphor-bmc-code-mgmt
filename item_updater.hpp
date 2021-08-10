@@ -263,7 +263,7 @@ class ItemUpdater : public ItemUpdaterInherit
     /** @brief Persistent Hosts Object mapping */
     HostFirmwareObjectsMap  hostFirmwareObjects;
 
-    const FirmwareImageUpdateData *
+    FirmwareImageUpdateData *
           canPerformUpdateFirmware(const std::string &imagePath);
 #endif
 };
