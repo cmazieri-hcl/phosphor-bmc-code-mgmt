@@ -53,7 +53,20 @@ conf.set('UBIFS_LAYOUT', get_option('bmc-layout').contains('ubi'))
 conf.set('MMC_LAYOUT', get_option('bmc-layout').contains('mmc'))
 
 # Configurable features
-conf.set('HOST_FIRMWARE_UPGRADE', get_option('host-firmware-upgrade').enabled())
+conf.set('HOST_FIRMWARE_UPGRADE', \
+                    get_option('host-bios-upgrade').enabled() or \
+                    get_option('host-cpld-upgrade').enabled() or \
+                    get_option('host-bic-upgrade').enabled() or \
+                    get_option('host-vr-upgrade').enabled() or \
+                    get_option('host-me-upgrade').enabled())
+
+
+conf.set('HOST_BIOS_UPGRADE', get_option('host-bios-upgrade').enabled())
+conf.set('HOST_CPLD_UPGRADE', get_option('host-cpld-upgrade').enabled())
+conf.set('HOST_BIC_UPGRADE',  get_option('host-bic-upgrade').enabled())
+conf.set('HOST_VR_UPGRADE',   get_option('host-vr-upgrade').enabled())
+conf.set('HOST_ME_UPGRADE',   get_option('host-me-upgrade').enabled())
+
 conf.set('WANT_SIGNATURE_VERIFY', \
     get_option('verify-signature').enabled() or \
     get_option('verify-full-signature').enabled())
@@ -82,10 +95,6 @@ conf.set_quoted('REGEX_BMC_MSL', get_option('regex-bmc-msl'))
 ## Machine layer must set a meson option such as -Dobmc_host_instances="${OBMC_HOST_INSTANCES}"
 ##
 conf.set_quoted('OBMC_HOST_INSTANCES', get_option('obmc_host_instances'))
-
-if get_option('host-firmware-upgrade').enabled()
-    conf.set_quoted('FIRMWARE_OBJPATH', get_option('firmware-object-path'))
-endif
 
 configure_file(output: 'config.h', configuration: conf)
 
@@ -165,8 +174,25 @@ elif get_option('bmc-layout').contains('mmc')
     ]
 endif
 
-if get_option('host-firmware-upgrade').enabled()
-    unit_files += 'obmc-flash-host-firmware@.service.in'
+if get_option('host-bios-upgrade').enabled()
+    unit_files += 'obmc-flash-host-bios@.service.in'
+endif
+
+
+if get_option('host-cpld-upgrade').enabled()
+    unit_files += 'obmc-flash-host-cpld@.service.in'
+endif
+
+if get_option('host-bic-upgrade').enabled()
+    unit_files += 'obmc-flash-host-bic@.service.in'
+endif
+
+if get_option('host-vr-upgrade').enabled()
+    unit_files += 'obmc-flash-host-vr@.service.in'
+endif
+
+if get_option('host-me-upgrade').enabled()
+    unit_files += 'obmc-flash-host-me@.service.in'
 endif
 
 if get_option('sync-bmc-files').enabled()

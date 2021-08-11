@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "hostimagetype.hpp"
 #include <filesystem>
 #include <iostream>
@@ -5,7 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
-
+#include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
 
 
@@ -36,6 +38,26 @@ class HostImageTypeTest : public testing::Test
         std::filesystem::remove_all(_directory);
     }
 
+    bool check_vector_strings(const std::vector<std::string>& array,
+                              const std::string& value)
+    {
+        std::string upper_value = value;
+        std::string lower_value = value;
+        boost::to_upper(upper_value);
+        boost::to_lower(lower_value);
+        bool ret = false;
+        auto counter = array.size();
+        while (counter-- > 0)
+        {
+            if (array.at(counter) == upper_value
+                    || array.at(counter) == lower_value)
+            {
+                ret = true;
+                break;
+            }
+        }
+        return ret;
+    }
     std::string _directory;
     std::string _bios_dir;
     std::string _cpld_dir;
@@ -234,6 +256,17 @@ TEST_F(HostImageTypeTest, TestCpldImageByContent)
     ASSERT_EQ(HostImageType::CPLD, cpld_image.curType());
 }
 
+TEST_F(HostImageTypeTest,  ImageTypesArrayNotEmpty)
+{
+    auto size = HostImageType::availableTypes().size();
+#ifdef HOST_FIRMWARE_UPGRADE
+    ASSERT_NE(size, 0);
+#ifdef HOST_BIOS_UPGRADE
+    auto exists = check_vector_strings(HostImageType::availableTypes(), "bios");
+    ASSERT_TRUE(exists);
+#endif
+#endif
+}
 
 TEST_F(HostImageTypeTest, TestMeImageByContent)
 {

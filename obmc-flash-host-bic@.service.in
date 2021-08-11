@@ -1,5 +1,5 @@
 [Unit]
-Description=Flash Host Bios image %I to Host
+Description=Flash Host BIC image %I to Host
 
 [Service]
 Type=oneshot

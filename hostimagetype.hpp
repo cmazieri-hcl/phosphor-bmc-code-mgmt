@@ -55,7 +55,8 @@ public:
     virtual ~HostImageType();
 public:
     static std::string  type(Type id);
-    static std::vector<std::string> availableTypes();
+    static std::vector<std::string> availableTypes();   
+    static std::vector<std::string> buildImageTypeArray();
 public:
     std::string         curTypeString() const;
     Type                curType() const;
@@ -91,7 +92,7 @@ private:
     bool                fileIsText(const std::string& filename)   const;
     HostImageType::FileContent fileContent(const std::string& filename)  const;   
 private: 
-   static const std::vector<std::string>  m_types;
+   static std::vector<std::string>  m_types;
    Type                 m_imageTypeId;
    std::string          m_imageFile;   // binary image file
 };

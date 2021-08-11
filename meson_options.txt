@@ -9,8 +9,20 @@ option('bmc-layout', type: 'combo',
     description: 'The BMC layout type.')
 
 # Features
-option('host-firmware-upgrade', type: 'feature',
-    description: 'Enable host firmware upgrade support.')
+option('host-bios-upgrade', type: 'feature',
+    description: 'Enable host BIOS upgrade support.')
+
+option('host-cpld-upgrade', type: 'feature',
+    description: 'Enable host CPLD upgrade support.')
+
+option('host-bic-upgrade', type: 'feature',
+    description: 'Enable host BIC upgrade support.')
+
+option('host-vr-upgrade', type: 'feature',
+    description: 'Enable host VR upgrade support.')
+
+option('host-me-upgrade', type: 'feature',
+    description: 'Enable host ME upgrade support.')
 
 option('sync-bmc-files', type: 'feature',
     description: 'Enable sync of filesystem files.')
@@ -102,12 +114,6 @@ option(
     'regex-bmc-msl', type: 'string',
     value: '',
     description: 'The Regular expression to parse the MSL.',
-)
-
-option(
-    'firmware-object-path', type: 'string',
-    value: '/xyz/openbmc_project/software/firmware',
-    description: 'The firmware DBus object path.',
 )
 
 option('obmc_host_instances', type: 'string',

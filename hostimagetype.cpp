@@ -14,6 +14,7 @@
 // limitations under the License.
 */
 
+#include "config.h"
 #include "hostimagetype.hpp"
 #include <filesystem>
 #include <iostream>
@@ -35,7 +36,7 @@ namespace updater
 /**
  *   These are the types handled so far, they must match with enumerator @sa Type
  **/
-const std::vector<std::string>  HostImageType::m_types{"bios", "cpld", "bic", "vr", "me"};
+std::vector<std::string>  HostImageType::m_types = HostImageType::buildImageTypeArray();
 
 HostImageType::HostImageType(const std::string &imageDirectory)
     : m_imageTypeId(Unknown)
@@ -84,6 +85,28 @@ std::string HostImageType::type(Type id)
 std::vector<std::string> HostImageType::availableTypes()
 {
     return HostImageType::m_types;
+}
+
+std::vector<std::string>
+HostImageType::buildImageTypeArray()
+{
+    std::vector<std::string> array;
+#if defined(HOST_BIOS_UPGRADE)
+        array.push_back("bios");
+#endif
+#if defined(HOST_CPLD_UPGRADE)
+        array.push_back("cpld");
+#endif
+#if defined(HOST_BIC_UPGRADE)
+        array.push_back("bic");
+#endif
+#if defined(HOST_VR_UPGRADE)
+        array.push_back("vr");
+#endif
+#if defined(HOST_ME_UPGRADE)
+        array.push_back("me");
+#endif
+    return array;
 }
 
 std::string HostImageType::curTypeString() const
