@@ -112,11 +112,13 @@ auto Activation::activation(Activations value) -> Activations
                     std::make_unique<ActivationProgress>(bus, path);
             }         
 
-           auto hostsUpdateInfo = parent.canPerformUpdateFirmware(path);
-           if (hostsUpdateInfo != nullptr)
+           m_hostFirmwareData = parent.canPerformUpdateFirmware(path);
+           if (m_hostFirmwareData != nullptr)
            {
-               std::string msg = "preparing to update firmware from "
-                                + std::to_string(hostsUpdateInfo->hostsToUpdate)
+               std::string msg = "preparing to update "
+                                + m_hostFirmwareData->image_type
+                                + " firmware on "
+                                + std::to_string(m_hostFirmwareData->hostsToUpdate)
                                 + " host(s)";
                log<level::INFO>(msg.c_str());
                // Enable systemd signals
@@ -126,13 +128,13 @@ auto Activation::activation(Activations value) -> Activations
                activationProgress->progress(2);
 
                // Initiate image writing to flash
-               flashWriteHost(hostsUpdateInfo);
+               flashWriteHost();
                return softwareServer::Activation::activation(value);
            }
            return softwareServer::Activation::activation(
                     softwareServer::Activation::Activations::Failed);
         }
-#endif
+#endif // HOST_FIRMWARE_UPGRADE
 
         auto versionStr = parent.versions.find(versionId)->second->version();
 
@@ -308,7 +310,7 @@ void Activation::unitStateChange(sdbusplus::message::message& msg)
         onStateChangesFirmware(msg);
         return;
     }
-#endif
+#endif // HOST_FIRMWARE_UPGRADE
 
     onStateChanges(msg);
 
@@ -392,20 +394,37 @@ bool Activation::checkApplyTimeImmediate()
 }
 
 #ifdef HOST_FIRMWARE_UPGRADE
-void Activation::flashWriteHost(const FirmwareImageUpdateData *)
-{
-    auto method = bus.new_method_call(SYSTEMD_BUSNAME, SYSTEMD_PATH,
-                                      SYSTEMD_INTERFACE, "StartUnit");
-    auto FirmwareServiceFile = "obmc-flash-host-firmware@" + versionId + ".service";
-    method.append(FirmwareServiceFile, "replace");
-    try
+void Activation::flashWriteHost()
+{       
+    decltype(m_hostFirmwareData->nextHostToUpdateFirmware()) hostToUpdate =
+                m_hostFirmwareData->nextHostToUpdateFirmware();
+    if (hostToUpdate != nullptr )
     {
-        auto reply = bus.call(method);
-    }
-    catch (const SdBusError& e)
-    {
-        log<level::ERR>("Error in trying to upgrade Host Firmware.");
-        report<InternalFailure>();
+        auto method = bus.new_method_call(SYSTEMD_BUSNAME, SYSTEMD_PATH,
+                                          SYSTEMD_INTERFACE, "StartUnit");
+        auto firmwareServiceFile = m_hostFirmwareData->baseServiceFileName(versionId);
+        if (parent.isMultiHostMachine())
+        {
+            auto str = hostToUpdate->hostObjectPath();
+            auto slash_position = str.find_last_of('/');
+            auto host = str.substr(slash_position+1, str.size() - slash_position -1);
+            firmwareServiceFile += "-" + host;
+        }
+        firmwareServiceFile += ".service";
+        method.append(firmwareServiceFile, "replace");
+        std::string msg = "launching host flash " + firmwareServiceFile;
+        log<level::INFO>(msg.c_str());
+        // save information this host object is being upated
+        m_hostFirmwareData->setCurrentHostUpdateOnGoing(hostToUpdate);
+        try
+        {
+            bus.call(method);
+        }
+        catch (const SdBusError& e)
+        {
+            log<level::ERR>(e.description());
+            report<InternalFailure>();
+        }
     }
 }
 
@@ -418,42 +437,52 @@ void Activation::onStateChangesFirmware(sdbusplus::message::message& msg)
 
     // Read the msg and populate each variable
     msg.read(newStateID, newStateObjPath, newStateUnit, newStateResult);
-
-    auto FirmwareServiceFile = "obmc-flash-host-firmware@" + versionId + ".service";
-
-    if (newStateUnit == FirmwareServiceFile)
-    {
-        // unsubscribe to systemd signals
-        unsubscribeFromSystemdSignals();
-
+    auto baseServiceFile = m_hostFirmwareData->baseServiceFileName(versionId);
+    // checks if newStateUnit starts with obmc-flash-host<img-type>@<versionId>
+    if (newStateUnit.rfind(baseServiceFile, 0) == 0)
+    {       
         if (newStateResult == "done")
         {
-            // Remove version object from image manager
-            deleteImageManagerObject();
-
-            // Set activation progress to 100
-            activationProgress->progress(100);
-
-            // Set Activation value to active
-            activation(softwareServer::Activation::Activations::Active);
-
-            log<level::INFO>("Firmware upgrade completed successfully.");
-            parent.firmwareVersion->version(
-                parent.versions.find(versionId)->second->version());
+            m_hostFirmwareData->currentHostBeingUpdated->setUpdateCompleted();
+            decltype(activationProgress->progress()) currentProgres =
+                         activationProgress->progress();
+            auto oneHostPercent = m_hostFirmwareData->stepHostUpdate();
+            currentProgres = currentProgres <  oneHostPercent ?
+                               oneHostPercent : currentProgres + oneHostPercent;
+            activationProgress->progress(currentProgres);
+            std::string str = "Firmware upgrade finished for "
+                               + m_hostFirmwareData->currentHostBeingUpdated->hostObjectPath();
+            log<level::INFO>(str.c_str());
+            str = "Total firmware upgrade status is %"
+                               + std::to_string(currentProgres);
+            log<level::INFO>(str.c_str());
+            if (m_hostFirmwareData->isUpdateDone() == true)
+            {
+                // unsubscribe to systemd signals
+                unsubscribeFromSystemdSignals();
+                // Remove version object from image manager
+                deleteImageManagerObject();               
+                // Set Activation value to active
+                activation(softwareServer::Activation::Activations::Active);
+                log<level::INFO>("Firmware upgrade completed successfully.");
+                parent.firmwareVersion->version(
+                            parent.versions.find(versionId)->second->version());
+            }
+            else if (parent.isMultiHostMachine() == true)
+            {                              
+                flashWriteHost(); // going flash next host if multi host machine
+            }
         }
         else if (newStateResult == "failed")
         {
             // Set Activation value to Failed
             activation(softwareServer::Activation::Activations::Failed);
-
             log<level::ERR>("Firmware upgrade failed.");
         }
     }
-
     return;
 }
-
-#endif
+#endif // HOST_FIRMWARE_UPGRADE
 
 void Activation::rebootBmc()
 {
