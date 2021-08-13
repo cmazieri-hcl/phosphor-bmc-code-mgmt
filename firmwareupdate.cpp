@@ -65,6 +65,12 @@ bool FirmwareUpdate::isUpdateRequired() const
     return FirmwareUpdateInherit::update();
 }
 
+bool FirmwareUpdate::isUpdateRequiredButNotStartedYet() const
+{
+    return FirmwareUpdateInherit::state() == NoneState
+             && isUpdateRequired() == true;
+}
+
 bool FirmwareUpdate::isFirmwareUpdated() const
 {
     return FirmwareUpdateInherit::state() == DoneState;

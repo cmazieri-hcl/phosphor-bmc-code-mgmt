@@ -67,6 +67,12 @@ class FirmwareUpdate : public FirmwareUpdateInherit
     bool isUpdateRequired() const;
 
     /**
+     * @brief isUpdateRequiredButNotStartedYet()
+     * @return true then firmware update must be performed
+     */
+    bool isUpdateRequiredButNotStartedYet() const;
+
+    /**
      * @brief isFirmwareUpdated
      * @return true when state is Done saying the image update has been performed
      */
