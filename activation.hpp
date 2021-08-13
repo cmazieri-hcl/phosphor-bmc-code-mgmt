@@ -241,14 +241,6 @@ class Activation : public ActivationInherit, public Flash
      */
     void onFlashWriteSuccess();
 
-#ifdef HOST_FIRMWARE_UPGRADE
-    /* @brief write to Host flash function */
-    void flashWriteHost(const FirmwareImageUpdateData* hostImageData);
-
-    /** @brief Function that acts on Firmware upgrade service file state changes */
-    void onStateChangesFirmware(sdbusplus::message::message&);
-#endif
-
     /** @brief Overloaded function that acts on service file state changes */
     void onStateChanges(sdbusplus::message::message&) override;
 
@@ -350,6 +342,17 @@ class Activation : public ActivationInherit, public Flash
 
     /** @brief Called when image verification fails. */
     void onVerifyFailed();
+#endif
+
+#ifdef HOST_FIRMWARE_UPGRADE
+private:
+    /* @brief write to Host flash function */
+    void flashWriteHost();
+
+    /** @brief Function that acts on Firmware upgrade service file state changes */
+    void onStateChangesFirmware(sdbusplus::message::message&);
+
+    FirmwareImageUpdateData*  m_hostFirmwareData = nullptr;
 #endif
 };
 
