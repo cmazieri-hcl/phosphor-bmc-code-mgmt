@@ -252,8 +252,7 @@ class ItemUpdater : public ItemUpdaterInherit
      *  On Firmware code update, the version is updated accordingly.
      */
     void createFirmwareObjectTree(const std::string& mainImageObjectPath,
-                                  const std::string& imageDirPath);
-    bool isMultiHostMachine() const;
+                                  const std::string& imageDirPath);   
     void createSingleFirmwareObject(const std::string& pathObject,
                                     FirmwareImageUpdateData *container);
 
@@ -263,6 +262,7 @@ class ItemUpdater : public ItemUpdaterInherit
     /** @brief Persistent Hosts Object mapping */
     HostFirmwareObjectsMap  hostFirmwareObjects;
 
+    bool isMultiHostMachine() const;
     FirmwareImageUpdateData *
           canPerformUpdateFirmware(const std::string &imagePath);
 #endif
