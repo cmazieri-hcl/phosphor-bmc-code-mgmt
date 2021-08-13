@@ -39,15 +39,60 @@ struct  FirmwareImageUpdateData
       : image_type(img_type)
       , image_binay_file(bin_file)
       , hostsToUpdate(0)
+      , hostsAlreadyUpated(0)
+      , currentHostBeingUpdated(nullptr)
     {
         // empty
     }
     FirmwareImageUpdateData()=delete;
     FirmwareImageUpdateData(const FirmwareImageUpdateData&)=delete;
-    FirmwareImageUpdateData& operator=(const FirmwareImageUpdateData&)=delete;   
+    FirmwareImageUpdateData& operator=(const FirmwareImageUpdateData&)=delete;
+    /**
+     * @brief nextHostToUpdateFirmware()
+     * @return next host information which \sa isUpdateRequiredButNotStartedYet() == true
+     */
+    FirmwareUpdate* nextHostToUpdateFirmware() const
+    {
+        auto counter = pathObjects.size();
+        while (counter-- > 0)
+        {
+            if (pathObjects.at(counter)->isUpdateRequiredButNotStartedYet() == true)
+            {
+                return pathObjects.at(counter).get();
+            }
+        }
+        return nullptr;
+    }
+    void setCurrentHostUpdateOnGoing(FirmwareUpdate* host)
+    {
+        currentHostBeingUpdated = host;
+        currentHostBeingUpdated->setUpdateOnGoing();
+        hostsAlreadyUpated++;
+    }
+    bool isUpdateDone() const
+    {
+        return hostsAlreadyUpated > 0
+                 && hostsAlreadyUpated == hostsToUpdate;
+    }
+    int stepHostUpdate() const
+    {
+        int percent = 0;
+        if (hostsToUpdate > 0 && hostsAlreadyUpated > 0)
+        {
+            percent = (hostsAlreadyUpated * 100) / hostsToUpdate;
+        }
+        return percent;
+    }
+    std::string baseServiceFileName(const std::string& imageId)
+    {
+        std::string basename = "obmc-flash-host-" + image_type + "@" + imageId;
+        return basename;
+    }
     std::string                                  image_type;
     const std::string                            image_binay_file;
     int                                          hostsToUpdate;
+    int                                          hostsAlreadyUpated;
+    FirmwareUpdate *                             currentHostBeingUpdated;
     std::vector<std::unique_ptr<FirmwareUpdate>> pathObjects;
 };
 
