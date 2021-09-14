@@ -33,9 +33,6 @@ namespace software
 namespace updater
 {
 
-/**
- *   These are the types handled so far, they must match with enumerator @sa Type
- **/
 std::vector<std::string>  HostImageType::m_types = HostImageType::buildImageTypeArray();
 
 HostImageType::HostImageType(const std::string &imageDirectory)
@@ -87,6 +84,11 @@ std::vector<std::string> HostImageType::availableTypes()
     return HostImageType::m_types;
 }
 
+/**
+ * @brief HostImageType::buildImageTypeArray()
+ * These are the types handled so far, they must match with enumerator @sa Type
+ * @return
+ */
 std::vector<std::string>
 HostImageType::buildImageTypeArray()
 {

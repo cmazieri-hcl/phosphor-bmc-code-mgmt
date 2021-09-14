@@ -896,7 +896,7 @@ ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
                 str.erase(slash_position, str.size() - slash_position);
                 slash_position = str.find_last_of('/');
             }
-            std::string image_type = str.substr(slash_position+1, str.size() - slash_position -1);
+            auto image_type = str.substr(slash_position+1, str.size() - slash_position -1);
             if (hostImageData->image_type.empty() == true)
             {
                 hostImageData->image_type = image_type;

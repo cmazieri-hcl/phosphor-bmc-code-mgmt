@@ -349,8 +349,9 @@ private:
     /* @brief write to Host flash function */
     void flashWriteHost();
 
-    /** @brief Function that acts on Firmware upgrade service file state changes */
-    void onStateChangesFirmware(sdbusplus::message::message&);
+    /** @brief Function that acts on Firmware upgrade service file state changes
+     */
+    void onHostStateChanges(sdbusplus::message::message&);
 
     FirmwareImageUpdateData*  m_hostFirmwareData = nullptr;
 #endif

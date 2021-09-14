@@ -27,7 +27,7 @@ namespace updater
 {
 
 /**
- * @brief The HostImageType class aims to identify an 'Image Type'
+ * @class The HostImageType class aims to identify an 'Image Type'
  *        of the firmware being updated into a BMC controlled Host.
  *
  * Static methods:
@@ -37,18 +37,30 @@ namespace updater
  * By passing the image directory into the constructor, this class provides:
  *   @li The current type of an image directory @sa curType() and @sa curTypeString()
  *
+ * For identifying an 'Image Type' the main methods are @sa guessTypeByName() and guessTypeByContent()
+ *
  */
 class HostImageType
 {
 public:
     enum Type
     {
-        Unknown = -1,
-        BIOS    = 0,
-        CPLD,
-        BIC,
-        VR,
-        ME
+        Unknown = -1
+#if defined(HOST_BIOS_UPGRADE)
+        , BIOS
+#endif
+#if defined(HOST_CPLD_UPGRADE)
+        , CPLD
+#endif
+#if defined(HOST_BIC_UPGRADE)
+        , BIC
+#endif
+#if defined(HOST_VR_UPGRADE)
+        , VR
+#endif
+#if defined(HOST_ME_UPGRADE)
+        , ME
+#endif
     };   
     explicit HostImageType(const std::string &imageDirectory);
     HostImageType()=delete;
@@ -69,7 +81,7 @@ private:
         Binary,
     };
     /**
-     * @brief guessTypeByName() checks if the filenames contain a defined ''Image Type' with a separator
+     * @fn guessTypeByName() checks if the filenames contain a defined 'Image Type' with a separator
      * 
      *      For example a filename like 'image-cpld.bin' contains the string 'cpld' between separators '-' and '.'
      * 
@@ -77,8 +89,9 @@ private:
      * @return  true when found such string type, otherwise false
      */
     bool                guessTypeByName(const std::vector<std::string>& files);
+
     /**
-     * @brief guessTypeByContent() searches for the string type isolated in uppercase.
+     * @fn guessTypeByContent() searches for the string type isolated in uppercase.
      *
      * If a text file present in the image directory contains
      *    for instance the word "BIOS" it is considered a image type bios.
