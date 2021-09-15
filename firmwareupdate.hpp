@@ -35,7 +35,7 @@ using FirmwareUpdateInherit = sdbusplus::server::object::object<
 
 class FirmwareUpdate : public FirmwareUpdateInherit
 {
-  public:   
+  public:
     /** @brief Constructs FirmwareUpdate Software Manager
      *
      * @param[in] bus            - The D-Bus bus object
@@ -72,11 +72,14 @@ class FirmwareUpdate : public FirmwareUpdateInherit
      */
     bool isUpdateRequiredButNotStartedYet() const;
 
+
+    bool isUpdateOnGoing() const;
+
     /**
      * @brief isFirmwareUpdated
      * @return true when state is Done saying the image update has been performed
      */
-    bool isFirmwareUpdated() const;
+    bool isUpdated() const;
 
     /**
      * @brief hostObjectPath()

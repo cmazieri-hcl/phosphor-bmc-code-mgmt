@@ -67,7 +67,7 @@ struct  FirmwareImageUpdateData
     }
 
 
-    FirmwareUpdate* getHostByService(const std::string& serviceName)
+    FirmwareUpdate* getOnGoingHostByService(const std::string& serviceName)
     {
         auto myServiceName =serviceName;
         auto counter = pathObjects.size();
@@ -99,15 +99,17 @@ struct  FirmwareImageUpdateData
                     while (counter-- > 0)
                     {
                         FirmwareUpdate* object = pathObjects.at(counter).get();
-                        const std::string host = object->hostObjectPath();
-                        auto hostTail = host.size() - parameterSize;
-                        if (hostTail > 0)
+                        if (object->isUpdateOnGoing())
                         {
-                            position = host.find(parameter, hostTail);
-                            if (position == hostTail) // ends with
+                            const std::string host = object->hostObjectPath();
+                            auto hostTail = host.size() - parameterSize;
+                            if (hostTail > 0)
                             {
-                                // object path will be 1a56bff3/cpld/1 (multi-host)
-                                return object;
+                                position = host.find(parameter, hostTail);
+                                if (position == hostTail) // ends with
+                                {
+                                    return object;
+                                }
                             }
                         }
                     }
@@ -166,7 +168,7 @@ struct  FirmwareImageUpdateData
             auto const & host = pathObjects.at(counter)->hostObjectPath();
             auto imgType = host.substr(image_type_pos, image_type_len);
             if (imgType == this->image_type
-                    && pathObjects.at(counter)->isFirmwareUpdated() == false)
+                    && pathObjects.at(counter)->isUpdated() == false)
             {
                 // image type matches but the host is not updated yet
                 allHostSameImageTypeUpdated  = false;

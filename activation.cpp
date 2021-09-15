@@ -455,7 +455,7 @@ void Activation::onHostStateChanges(sdbusplus::message::message& msg)
         if (newStateResult == "done")
         {
             auto currentHostBeingUpdated =
-                    m_hostFirmwareData->getHostByService(newStateUnit);
+                    m_hostFirmwareData->getOnGoingHostByService(newStateUnit);
             m_hostFirmwareData->setUpdateCompleted(currentHostBeingUpdated);
             decltype(activationProgress->progress()) currentProgres =
                          activationProgress->progress();
