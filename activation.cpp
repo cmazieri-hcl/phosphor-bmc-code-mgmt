@@ -369,7 +369,6 @@ bool Activation::checkApplyTimeImmediate()
     }
     else
     {
-
         auto method = bus.new_method_call(service.c_str(), applyTimeObjPath,
                                           dbusPropIntf, "Get");
         method.append(applyTimeIntf, applyTimeProp);
@@ -451,7 +450,6 @@ void Activation::onHostStateChanges(sdbusplus::message::message& msg)
     // checks if newStateUnit starts with obmc-flash-host<img-type>@<versionId>
     if (newStateUnit.rfind(baseServiceFile, 0) == 0)
     {
-
         if (newStateResult == "done")
         {
             auto currentHostBeingUpdated =

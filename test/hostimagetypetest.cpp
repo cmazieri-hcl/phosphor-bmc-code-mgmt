@@ -63,7 +63,7 @@ class HostImageTypeTest : public testing::Test
     std::string _cpld_dir;
     std::string _me_dir;
     std::string _none_dir;
-    
+
 private:
     void createImageDirectories()
     {
@@ -75,18 +75,20 @@ private:
         mkdir(_me_dir.c_str(), 0775);
         mkdir(_none_dir.c_str(), 0775);
     }
-    
-    void createBinaryFile(const std::string& filename, const char *data = nullptr, int len = 0)
+
+    void createBinaryFile(const std::string& filename,
+                          const char *data = nullptr,
+                          int len = 0)
     {
-        int  file = ::open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
-        ASSERT_TRUE(file > 0 );
+        int  file = ::open(filename.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
+        ASSERT_GT(file, 0);
         if (data == nullptr)
         {
             char binary_content [] = "1g\nnull=\0\0\0\nlast line\n";
             data = binary_content;
             len  = sizeof(data);
         }
-        ASSERT_TRUE(::write(file, data, len) == len);
+        ASSERT_EQ(::write(file, data, len), len);
         ::close(file);
     }
 
@@ -102,17 +104,17 @@ private:
         }
         file << data;
         file.close();
-        ASSERT_TRUE(std::filesystem::file_size(filename) > 0);
+        ASSERT_GT(std::filesystem::file_size(filename), 0);
     }
 
     void createManifest(const std::string& filename)
     {
         const char *data =
-                "purpose=xyz.openbmc_project.Software.Version.VersionPurpose.Host\n"
-                "version=1.0mz-dev\n"
-                "MachineName=yosemitv2\n"
-                "KeyType=OpenBMC\n"
-                "HashType=RSA-SHA256\n";
+           "purpose=xyz.openbmc_project.Software.Version.VersionPurpose.Host\n"
+           "version=1.0mz-dev\n"
+           "MachineName=yosemitv2\n"
+           "KeyType=OpenBMC\n"
+           "HashType=RSA-SHA256\n";
         createTextFile(filename, data);
     }
 
@@ -120,7 +122,8 @@ private:
     {
         createManifest(_bios_dir  + '/' + "MANIFEST");
         char bios_image [] = "This is the image, null=\0\0\n/nData is binary";
-        createBinaryFile(_bios_dir  + '/' + "bios.bin", bios_image, sizeof(bios_image));
+        createBinaryFile(_bios_dir  + '/' + "bios.bin", bios_image,
+                         sizeof(bios_image));
         createTextFile(_bios_dir  + '/' + "bios.bin.sig");
         createTextFile(_bios_dir  + '/' + "MANIFEST.sig");
         createTextFile(_bios_dir  + '/' + "publickey");
@@ -140,35 +143,46 @@ private:
     {
         createManifest(_cpld_dir  + '/' + "MANIFEST");
         char image [] = "This is the image, null=\0\0\n/nData is binary";
-        createBinaryFile(_cpld_dir  + '/' + "Twin_Lakes_DVT_0811_1.01_0X51020101_OBMC.bin", image, sizeof(image));
-        createTextFile(_cpld_dir    + '/' + "Twin_Lakes_DVT_0811_1.01_0X51020101.jed");
+        createBinaryFile(_cpld_dir
+                         + '/' + "Twin_Lakes_DVT_0811_1.01_0X51020101_OBMC.bin",
+                         image, sizeof(image));
+        createTextFile(_cpld_dir
+                       + '/' + "Twin_Lakes_DVT_0811_1.01_0X51020101.jed");
         char cpld_note[] =
-                "===============================================================\n"
-                "    F09 CPLD code v1.01 release note\n"
-                "===============================================================\n"
-                "Release date : 2017/8/11\n"
-                "File name : Twin_Lakes_DVT_0811_1.01_0X51020101.jed (update with Lattice dongle)\n"
-                "            Twin_Lakes_DVT_0811_1.01_0X51020101_OBMC.bin (update with yafuflash)\n"
-                "Checksum :  0x8C28\n"
-                "Usercode :  0x51020101\n"
-                "Compatible firmware version : Firmware version above Bridge IC FW 1.08 and openBMC fby2-v2.0.\n"
-                "Remark : Based on Yuba City CPLD code (YubaCity_rev0p8_External_0221)\n"
-                "\n"
-                "Change item :\n"
-                "Rev 1.01\n"
-                "1. Add a feature to disable PVNN_PCH_STBY and P1V05_PCH_STBY VR before VR firmware update by FM_DISABLE_PCH_VR. \n"
-                "\n"
-                "Rev 1.00\n"
-                "1. PWRGD_CPU0_LVC3_R will keep low until PWRGD_PCH_PWROK is valid to prevernt a fake SOC temperature event. \n"
-                "2. Any glitch on RST_PLTRST_N will be filtered out until PWRGD_SYS_PWROK. \n"
-                "3. Fix PVCCIN power down sequence issue. (VCCIO failure to 0.65V to VCCIN 1.2V <= 0.5ms)\n"
-                "4. Support CPLD on-line update via I2C bus.\n"
-                "5. Assign FAST_THROTTLE_N to throttle SOC when HSC OCP event.\n"
-                "\n"
-                "Rev 0.01\n"
-                "1. Initial release for power-on.\n"
+    "===============================================================\n"
+    "    F09 CPLD code v1.01 release note\n"
+    "===============================================================\n"
+    "Release date : 2017/8/11\n"
+    "File name : Twin_Lakes_DVT_0811_1.01_0X51020101.jed "
+    "(update with Lattice dongle)\n"
+    "            Twin_Lakes_DVT_0811_1.01_0X51020101_OBMC.bin "
+    "(update with yafuflash)\n"
+    "Checksum :  0x8C28\n"
+    "Usercode :  0x51020101\n"
+    "Compatible firmware version : Firmware version above Bridge IC FW 1.08 "
+    "and openBMC fby2-v2.0.\n"
+    "Remark : Based on Yuba City CPLD code (YubaCity_rev0p8_External_0221)\n"
+    "\n"
+    "Change item :\n"
+    "Rev 1.01\n"
+    "1. Add a feature to disable PVNN_PCH_STBY and P1V05_PCH_STBY VR before "
+    "VR firmware update by FM_DISABLE_PCH_VR. \n"
+    "\n"
+    "Rev 1.00\n"
+    "1. PWRGD_CPU0_LVC3_R will keep low until PWRGD_PCH_PWROK is valid "
+    "to prevernt a fake SOC temperature event. \n"
+    "2. Any glitch on RST_PLTRST_N will be filtered out until "
+    "PWRGD_SYS_PWROK.\n"
+    "3. Fix PVCCIN power down sequence issue. (VCCIO failure to 0.65V to "
+    "VCCIN 1.2V <= 0.5ms)\n"
+    "4. Support CPLD on-line update via I2C bus.\n"
+    "5. Assign FAST_THROTTLE_N to throttle SOC when HSC OCP event.\n"
+    "\n"
+    "Rev 0.01\n"
+    "1. Initial release for power-on.\n"
                 "\n";
-        createTextFile(_cpld_dir    + '/' + "09_CPLD_Note_0811_Rev1.01.txt", cpld_note);
+        createTextFile(_cpld_dir    + '/' + "09_CPLD_Note_0811_Rev1.01.txt",
+                       cpld_note);
     }
 
     void createMeFiles()
@@ -179,19 +193,22 @@ private:
             0x45, 0x7f, 0x46, 0x4c, 0x01, 0x02, 0x00, 0x01,
             0x00, 0x3e, 0x01, 0x2a, 0x40, 0x00, 0x00, 0x01
           };
-        createBinaryFile(_me_dir  + '/' + "afulnx_64_twinlakes", image_elf, sizeof(image_elf));
+        createBinaryFile(_me_dir  + '/' + "afulnx_64_twinlakes",
+                         image_elf, sizeof(image_elf));
         char image [] = "This is the image,"
-                        "PWRGD_CPU0_LVC3_R will keep low until PWRGD_PCH_PWROK is valid to"
-                        "null=\0\0\n/nData is binary";
-        createBinaryFile(_me_dir    + '/' + "YMM05_FwOrch_1550736000.bin", image, sizeof(image));
+                        "PWRGD_CPU0_LVC3_R will keep low until PWRGD_PCH_PWROK"
+                        " is valid to null=\0\0\n/nData is binary";
+        createBinaryFile(_me_dir    + '/' + "YMM05_FwOrch_1550736000.bin",
+                         image, sizeof(image));
         char script_data[] = "#!/usr/bin/env bash\n"
-                             "  RCUTIMEOUT=$(cat /sys/module/rcupdate/parameters/rcu_cpu_stall_timeout)\n"
-                             "# Try to reset ME first to prevent ME region locking issue\n"
-                             "# this ipmi command reboots ME without rebooting host paltform\n"
-                             "# Try to flash ME region first and then proceed with the rest\n"
-                             "  retry_command ./afulnx_64_twinlakes YMM05_FwOrch_1550736000.bin /ME\n"
-                             "echo \"ME region flash failed after 3 retries: ${me_flash_e_code}\"\n"
-                             "echo \"$RCUTIMEOUT\" > /sys/module/rcupdate/parameters/rcu_cpu_stall_timeout\n";
+  "  RCUTIMEOUT=$(cat /sys/module/rcupdate/parameters/rcu_cpu_stall_timeout)\n"
+  "# Try to reset ME first to prevent ME region locking issue\n"
+  "# this ipmi command reboots ME without rebooting host paltform\n"
+  "# Try to flash ME region first and then proceed with the rest\n"
+  "  retry_command ./afulnx_64_twinlakes YMM05_FwOrch_1550736000.bin /ME\n"
+  "echo \"ME region flash failed after 3 retries: ${me_flash_e_code}\"\n"
+  "echo \"$RCUTIMEOUT\" >"
+  " /sys/module/rcupdate/parameters/rcu_cpu_stall_timeout\n";
 
         createTextFile(_me_dir    + '/' + "run_script", script_data);
     }
@@ -201,8 +218,8 @@ TEST_F(HostImageTypeTest, TestDirectoryDoesContainImage)
 {
     HostImageType imagedir(_directory);
     ASSERT_EQ(HostImageType::Unknown, imagedir.curType());
-    ASSERT_TRUE(imagedir.imageFile().size() == 0);
-    ASSERT_TRUE(imagedir.curTypeString().size() == 0);
+    ASSERT_EQ(imagedir.imageFile().size(), 0);
+    ASSERT_EQ(imagedir.curTypeString().size(), 0);
 }
 
 
@@ -210,16 +227,16 @@ TEST_F(HostImageTypeTest, TestDirectoryDoesNotExist)
 {
     HostImageType imagedir("_this_directory_MUST_not_exist_zzzzzzzzzz00000000");
     ASSERT_EQ(HostImageType::Unknown, imagedir.curType());
-    ASSERT_TRUE(imagedir.imageFile().size() == 0);
-    ASSERT_TRUE(imagedir.curTypeString().size() == 0);
+    ASSERT_EQ(imagedir.imageFile().size(), 0);
+    ASSERT_EQ(imagedir.curTypeString().size(), 0);
 }
 
 TEST_F(HostImageTypeTest, TestUnknownImage)
-{   
+{
     HostImageType imagedirNone(_none_dir);
     ASSERT_EQ(HostImageType::Unknown, imagedirNone.curType());
-    ASSERT_TRUE(imagedirNone.imageFile().size() == 0);
-    ASSERT_TRUE(imagedirNone.curTypeString().size() == 0);
+    ASSERT_EQ(imagedirNone.imageFile().size(), 0);
+    ASSERT_EQ(imagedirNone.curTypeString().size(), 0);
 }
 
 TEST_F(HostImageTypeTest, TestBiosImageByName)
@@ -227,7 +244,7 @@ TEST_F(HostImageTypeTest, TestBiosImageByName)
     HostImageType bios_image(_bios_dir);
     ASSERT_EQ("bios", bios_image.curTypeString());
     ASSERT_EQ(HostImageType::BIOS, bios_image.curType());
-    ASSERT_TRUE(bios_image.imageFile().find("bios.bin") != std::string::npos);
+    ASSERT_NE(bios_image.imageFile().find("bios.bin"), std::string::npos);
 }
 
 TEST_F(HostImageTypeTest, TestCpldImageByName)
@@ -235,15 +252,18 @@ TEST_F(HostImageTypeTest, TestCpldImageByName)
     HostImageType cpld_image(_cpld_dir);
     ASSERT_EQ("cpld", cpld_image.curTypeString());
     ASSERT_EQ(HostImageType::CPLD, cpld_image.curType());
-    const std::string image_name{"Twin_Lakes_DVT_0811_1.01_0X51020101_OBMC.bin"};
-    ASSERT_TRUE(cpld_image.imageFile().find(image_name) != std::string::npos);
+    const std::string
+            image_name{"Twin_Lakes_DVT_0811_1.01_0X51020101_OBMC.bin"};
+    ASSERT_NE(cpld_image.imageFile().find(image_name), std::string::npos);
 }
 
 
 TEST_F(HostImageTypeTest, TestCpldImageByContent)
 {
-    const std::string cpld_release_notes    = _cpld_dir + '/' + "09_CPLD_Note_0811_Rev1.01.txt";
-    const std::string renamed_release_notes = _cpld_dir + '/' + "guess_content.txt";
+    const std::string cpld_release_notes    = _cpld_dir
+                                       + '/' + "09_CPLD_Note_0811_Rev1.01.txt";
+    const std::string renamed_release_notes = _cpld_dir
+                                              + '/' + "guess_content.txt";
     // rename the file to avoid guessing Type by file name
     ASSERT_TRUE(std::filesystem::exists(cpld_release_notes));
     ASSERT_FALSE(std::filesystem::exists(renamed_release_notes));
@@ -258,8 +278,8 @@ TEST_F(HostImageTypeTest, TestCpldImageByContent)
 
 TEST_F(HostImageTypeTest,  ImageTypesArrayNotEmpty)
 {
-    auto size = HostImageType::availableTypes().size();
 #ifdef HOST_FIRMWARE_UPGRADE
+    auto size = HostImageType::availableTypes().size();
     ASSERT_NE(size, 0);
 #ifdef HOST_BIOS_UPGRADE
     auto exists = check_vector_strings(HostImageType::availableTypes(), "bios");

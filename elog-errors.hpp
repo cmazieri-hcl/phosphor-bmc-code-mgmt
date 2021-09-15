@@ -136,7 +136,7 @@ struct PATH
      */
     static constexpr auto str_short = "PATH";
     using type = std::tuple<std::decay_t<decltype("PATH=%s")>, const char*>;
-    explicit constexpr PATH(const char* a) : _entry(entry("PATH=%s", a)){};
+    explicit constexpr PATH(const char* a) : _entry(entry("PATH=%s", a)){}
     type _entry;
 };
 
@@ -186,7 +186,7 @@ struct PATH
      */
     static constexpr auto str_short = "PATH";
     using type = std::tuple<std::decay_t<decltype("PATH=%s")>, const char*>;
-    explicit constexpr PATH(const char* a) : _entry(entry("PATH=%s", a)){};
+    explicit constexpr PATH(const char* a) : _entry(entry("PATH=%s", a)){}
     type _entry;
 };
 
@@ -236,7 +236,7 @@ struct FAIL
      */
     static constexpr auto str_short = "FAIL";
     using type = std::tuple<std::decay_t<decltype("FAIL=%s")>, const char*>;
-    explicit constexpr FAIL(const char* a) : _entry(entry("FAIL=%s", a)){};
+    explicit constexpr FAIL(const char* a) : _entry(entry("FAIL=%s", a)){}
     type _entry;
 };
 
@@ -286,7 +286,7 @@ struct FAIL
      */
     static constexpr auto str_short = "FAIL";
     using type = std::tuple<std::decay_t<decltype("FAIL=%s")>, const char*>;
-    explicit constexpr FAIL(const char* a) : _entry(entry("FAIL=%s", a)){};
+    explicit constexpr FAIL(const char* a) : _entry(entry("FAIL=%s", a)){}
     type _entry;
 };
 struct PATH
@@ -298,7 +298,7 @@ struct PATH
      */
     static constexpr auto str_short = "PATH";
     using type = std::tuple<std::decay_t<decltype("PATH=%s")>, const char*>;
-    explicit constexpr PATH(const char* a) : _entry(entry("PATH=%s", a)){};
+    explicit constexpr PATH(const char* a) : _entry(entry("PATH=%s", a)){}
     type _entry;
 };
 
@@ -349,7 +349,7 @@ struct PATH
      */
     static constexpr auto str_short = "PATH";
     using type = std::tuple<std::decay_t<decltype("PATH=%s")>, const char*>;
-    explicit constexpr PATH(const char* a) : _entry(entry("PATH=%s", a)){};
+    explicit constexpr PATH(const char* a) : _entry(entry("PATH=%s", a)){}
     type _entry;
 };
 

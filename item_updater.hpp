@@ -252,7 +252,7 @@ class ItemUpdater : public ItemUpdaterInherit
      *  On Firmware code update, the version is updated accordingly.
      */
     void createFirmwareObjectTree(const std::string& mainImageObjectPath,
-                                  const std::string& imageDirPath);   
+                                  const std::string& imageDirPath);
     void createSingleFirmwareObject(const std::string& pathObject,
                                     FirmwareImageUpdateData *container);
 

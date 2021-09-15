@@ -78,7 +78,6 @@ std::string Version::getValue(const std::string& manifestFilePath,
 
 std::string Version::getId(const std::string& version)
 {
-
     if (version.empty())
     {
         log<level::ERR>("Error version is empty");

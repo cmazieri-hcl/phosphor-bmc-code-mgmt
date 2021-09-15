@@ -19,9 +19,9 @@
 #include <phosphor-logging/log.hpp>
 #include <sdbusplus/bus/match.hpp>
 
-const std::string NoneState{"None"};
-const std::string OnGoingState{"OnGoing"};
-const std::string DoneState{"Done"};
+constexpr const char * NoneState    = "None";
+constexpr const char * OnGoingState = "OnGoing";
+constexpr const char * DoneState    = "Done";
 
 namespace phosphor
 {
@@ -36,7 +36,7 @@ FirmwareUpdate::FirmwareUpdate(sdbusplus::bus::bus& bus,
                                const std::string& objPath)
     : FirmwareUpdateInherit(bus, (objPath).c_str(), true)
     , _hostObjPath(objPath)
-{  
+{
     FirmwareUpdateInherit::update(false, true);
     FirmwareUpdateInherit::state(NoneState, true);
     emit_object_added();   // Emit deferred signal

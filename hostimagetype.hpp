@@ -35,9 +35,11 @@ namespace updater
  * @li  @sa type(Type id) a string id for a such Type id
  *
  * By passing the image directory into the constructor, this class provides:
- *   @li The current type of an image directory @sa curType() and @sa curTypeString()
+ *   @li The current type of an image directory @sa curType()
+ *        and @sa curTypeString()
  *
- * For identifying an 'Image Type' the main methods are @sa guessTypeByName() and guessTypeByContent()
+ * For identifying an 'Image Type' the main methods are @sa guessTypeByName()
+ *       and guessTypeByContent()
  *
  */
 class HostImageType
@@ -61,19 +63,19 @@ public:
 #if defined(HOST_ME_UPGRADE)
         , ME
 #endif
-    };   
+    };
     explicit HostImageType(const std::string &imageDirectory);
-    HostImageType()=delete;
+    HostImageType() = delete;
     virtual ~HostImageType();
-public:
+ public:
     static std::string  type(Type id);
-    static std::vector<std::string> availableTypes();   
+    static std::vector<std::string> availableTypes();
     static std::vector<std::string> buildImageTypeArray();
-public:
+ public:
     std::string         curTypeString() const;
     Type                curType() const;
     std::string         imageFile() const;
-private:
+ private:
     enum FileContent
     {
         NotRegular,
@@ -81,33 +83,35 @@ private:
         Binary,
     };
     /**
-     * @fn guessTypeByName() checks if the filenames contain a defined 'Image Type' with a separator
-     * 
-     *      For example a filename like 'image-cpld.bin' contains the string 'cpld' between separators '-' and '.'
-     * 
+     * @fn guessTypeByName() checks if the filenames contain a defined
+     *     'Image Type' with a separator
+     *
+     *     For example a filename like 'image-cpld.bin' contains the string
+     *       'cpld' between separators '-' and '.'
+     *
      * @param files   files the list of text file to search
      * @return  true when found such string type, otherwise false
      */
     bool                guessTypeByName(const std::vector<std::string>& files);
 
     /**
-     * @fn guessTypeByContent() searches for the string type isolated in uppercase.
+     * @fn guessTypeByContent() searches for the string type isolated
      *
      * If a text file present in the image directory contains
      *    for instance the word "BIOS" it is considered a image type bios.
-     * 
+     *
      * @param files the list of text file to search
      * @return true when found such string type, otherwise false
      */
-    bool                guessTypeByContent(const std::vector<std::string>& files);
-    void                gessImageName(const std::vector<std::string>& files);
-    bool                fileIsBinary(const std::string& filename) const;
-    bool                fileIsText(const std::string& filename)   const;
-    HostImageType::FileContent fileContent(const std::string& filename)  const;   
-private: 
-   static std::vector<std::string>  m_types;
-   Type                 m_imageTypeId;
-   std::string          m_imageFile;   // binary image file
+    bool      guessTypeByContent(const std::vector<std::string>& files);
+    void      gessImageName(const std::vector<std::string>& files);
+    bool      fileIsBinary(const std::string& filename) const;
+    bool      fileIsText(const std::string& filename)   const;
+    HostImageType::FileContent fileContent(const std::string& filename) const;
+ private:
+    static std::vector<std::string>  m_types;
+    Type                 m_imageTypeId;
+    std::string          m_imageFile;   // binary image file
 };
 
 

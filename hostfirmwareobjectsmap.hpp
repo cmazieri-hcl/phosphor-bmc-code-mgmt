@@ -33,7 +33,7 @@ namespace updater
 /**
  * Keeps the information necessary to handle and flash a single host image
  */
-struct  FirmwareImageUpdateData
+struct FirmwareImageUpdateData
 {
     FirmwareImageUpdateData(const std::string& img_type,
                             const std::string& bin_file)
@@ -44,9 +44,9 @@ struct  FirmwareImageUpdateData
     {
         // empty
     }
-    FirmwareImageUpdateData()=delete;
-    FirmwareImageUpdateData(const FirmwareImageUpdateData&)=delete;
-    FirmwareImageUpdateData& operator=(const FirmwareImageUpdateData&)=delete;
+    FirmwareImageUpdateData() = delete;
+    FirmwareImageUpdateData(const FirmwareImageUpdateData&) = delete;
+    FirmwareImageUpdateData& operator=(const FirmwareImageUpdateData&) = delete;
     /**
      * @brief nextHostToUpdateFirmware()
      * @return next host information which
@@ -69,7 +69,7 @@ struct  FirmwareImageUpdateData
 
     FirmwareUpdate* getOnGoingHostByService(const std::string& serviceName)
     {
-        auto myServiceName =serviceName;
+        auto myServiceName = serviceName;
         auto counter = pathObjects.size();
         if (counter > 0)
         {

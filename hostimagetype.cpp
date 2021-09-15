@@ -33,7 +33,8 @@ namespace software
 namespace updater
 {
 
-std::vector<std::string>  HostImageType::m_types = HostImageType::buildImageTypeArray();
+std::vector<std::string>  HostImageType::m_types =
+        HostImageType::buildImageTypeArray();
 
 HostImageType::HostImageType(const std::string &imageDirectory)
     : m_imageTypeId(Unknown)
@@ -42,15 +43,17 @@ HostImageType::HostImageType(const std::string &imageDirectory)
     {
         std::vector<std::string> binary_files;
         std::vector<std::string> text_files;
-        for(auto& file: std::filesystem::directory_iterator(imageDirectory))
+        for (auto& file : std::filesystem::directory_iterator(imageDirectory))
         {   // check if file name does not start with "MANIFEST"
             if (file.path().filename().string().rfind("MANIFEST", 0) != 0)
             {
                 auto contentType = fileContent(file.path());
-                if (contentType == FileContent::Text) {
+                if (contentType == FileContent::Text)
+                {
                     text_files.push_back(file.path());
                 }
-                else if (contentType == FileContent::Binary) {
+                else if (contentType == FileContent::Binary)
+                {
                     binary_files.push_back(file.path());
                 }
             }
@@ -132,29 +135,35 @@ bool HostImageType::guessTypeByName(const std::vector<std::string> &files)
     auto fileCounter = files.size();
     while (fileCounter-- && gotType == false)
     {
-           auto name  = std::filesystem::path(files.at(fileCounter)).filename().string();
-           for (size_t counter = 0; counter < name.size(); ++counter)
-           {   // an image name such as "bios.bin" will became "bios bin"
-               if (name[counter] == '_' || name[counter] == '-' || name[counter] == '.')
-               {
-                   name.replace(counter, 1, " ");
-               }
-           }
-           for (size_t counter=0; counter < HostImageType::m_types.size(); ++counter)
-           {
-               std::string type_lowercase_plus_space = HostImageType::m_types.at(counter) + ' ';
-               /* convert file name to lowercase as the type names are in lowercase
-                *   search in name for strings such as "bios " or "cpld " (having space at end)
-                */
-               std::string name_lowercase = name;
-               boost::to_lower(name);
-               if (name_lowercase.find(type_lowercase_plus_space) != std::string::npos )
-               {
-                  m_imageTypeId = static_cast<Type>(counter);
-                  gotType = true;
-                  break;
-               }
-           }
+        auto name =
+              std::filesystem::path(files.at(fileCounter)).filename().string();
+        for (size_t counter = 0; counter < name.size(); ++counter)
+        {   // an image name such as "bios.bin" will became "bios bin"
+            if (name[counter] == '_'
+                    || name[counter] == '-' || name[counter] == '.')
+            {
+                name.replace(counter, 1, " ");
+            }
+        }
+        for (size_t counter=0; counter < HostImageType::m_types.size();
+             ++counter)
+        {
+            auto type_lowercase_plus_space = HostImageType::m_types.at(counter)
+                                              + ' ';
+            /* convert file name to lowercase as the type names are in lowercase
+             *   search in name for strings such as "bios " or "cpld "
+             *     (having space at end)
+             */
+            std::string name_lowercase = name;
+            boost::to_lower(name);
+            if (name_lowercase.find(type_lowercase_plus_space)
+                    != std::string::npos )
+            {
+                m_imageTypeId = static_cast<Type>(counter);
+                gotType = true;
+                break;
+            }
+        }
     }
     return gotType;
 }
@@ -180,7 +189,8 @@ bool HostImageType::guessTypeByContent(const std::vector<std::string> &files)
             if (stream.is_open() == true)
             {
                 char line[LINE_BUFFER_SIZE];
-                for(int counter=0; counter < MAX_LINES && stream.good(); ++counter)
+                for (int counter=0; counter < MAX_LINES && stream.good();
+                     ++counter)
                 {
                     stream.getline(line, sizeof(line));
                     if (std::regex_search(line, reg) == true)
@@ -230,7 +240,8 @@ HostImageType::fileContent(const std::string &filename) const
     HostImageType::FileContent content = HostImageType::NotRegular;
     if (std::filesystem::is_regular_file(filename))
     {
-        std::ifstream stream(filename.c_str(), std::ios_base::in | std::ios_base::binary);
+        std::ifstream
+            stream(filename.c_str(), std::ios_base::in | std::ios_base::binary);
         if (stream.is_open() == true)
         {
             char buffer[READ_BUFFER_SIZE];
@@ -259,4 +270,3 @@ HostImageType::fileContent(const std::string &filename) const
 } // namespace updater
 } // namespace software
 } // namespace phosphor
-

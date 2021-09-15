@@ -61,7 +61,6 @@ ItemUpdater::ItemUpdater(sdbusplus::bus::bus& bus, const std::string& path)
 
 void ItemUpdater::createActivation(sdbusplus::message::message& msg)
 {
-
     using SVersion = server::Version;
     using VersionPurpose = SVersion::VersionPurpose;
     using VersionClass = phosphor::software::manager::Version;
@@ -71,7 +70,7 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
     std::string extendedVersion;
     std::string version;
     std::map<std::string, std::map<std::string, std::variant<std::string>>>
-        interfaces;
+            interfaces;
     msg.read(objPath, interfaces);
     std::string path(std::move(objPath));
     std::string filePath;
@@ -86,19 +85,20 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
                 if (property.first == "Purpose")
                 {
                     auto value = SVersion::convertVersionPurposeFromString(
-                        std::get<std::string>(property.second));
-                    if (value == VersionPurpose::BMC || value == VersionPurpose::System)
+                                std::get<std::string>(property.second));
+                    if (value == VersionPurpose::BMC
+                            || value == VersionPurpose::System)
                     {
-                         purpose = value;
+                        purpose = value;
                     }
 #ifdef HOST_FIRMWARE_UPGRADE
                     else if (value == VersionPurpose::Host)
                     {
                         purpose = value;
-                        // save main image object path, children will be created for that
+                        // save main image object path
                         topLevelFirmareHostObjectPath = path;
                     }
-#endif                 
+#endif
                 }
                 else if (property.first == "Version")
                 {
@@ -128,7 +128,7 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
         }
     }
     if (version.empty() || filePath.empty() ||
-        purpose == VersionPurpose::Unknown)
+            purpose == VersionPurpose::Unknown)
     {
         return;
     }
@@ -161,20 +161,26 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
             activationState = server::Activation::Activations::Ready;
             // Create an association to the BMC inventory item
             associations.emplace_back(
-                std::make_tuple(ACTIVATION_FWD_ASSOCIATION,
-                                ACTIVATION_REV_ASSOCIATION, bmcInventoryPath));
+                        std::make_tuple(ACTIVATION_FWD_ASSOCIATION,
+                                        ACTIVATION_REV_ASSOCIATION,
+                                        bmcInventoryPath));
         }
 
         activations.insert(std::make_pair(
-            versionId,
-            std::make_unique<Activation>(bus, path, *this, versionId,
-                                         activationState, associations)));
+                               versionId,
+                               std::make_unique<Activation>(bus,
+                                                            path,
+                                                            *this,
+                                                            versionId,
+                                                            activationState,
+                                                            associations)));
 
         auto versionPtr = std::make_unique<VersionClass>(
-            bus, path, version, purpose, extendedVersion, filePath,
-            std::bind(&ItemUpdater::erase, this, std::placeholders::_1));
+                  bus, path, version, purpose, extendedVersion, filePath,
+                  std::bind(&ItemUpdater::erase, this, std::placeholders::_1));
         versionPtr->deleteObject =
-            std::make_unique<phosphor::software::manager::Delete>(bus, path,
+            std::make_unique<phosphor::software::manager::Delete>(bus,
+                                                                  path,
                                                                   *versionPtr);
         versions.insert(std::make_pair(versionId, std::move(versionPtr)));
 #ifdef HOST_FIRMWARE_UPGRADE
@@ -218,7 +224,9 @@ void ItemUpdater::processBMCImage()
 
         // Check if the BMC_RO_PREFIXis the prefix of the iter.path
         if (0 ==
-            iter.path().native().compare(0, BMC_RO_PREFIX_LEN, BMC_ROFS_PREFIX))
+                iter.path().native().compare(0,
+                                             BMC_RO_PREFIX_LEN,
+                                             BMC_ROFS_PREFIX))
         {
             // Get the version to calculate the id
             fs::path releaseFile(OS_RELEASE_FILE);
@@ -226,8 +234,8 @@ void ItemUpdater::processBMCImage()
             if (!fs::is_regular_file(osRelease))
             {
                 log<level::ERR>(
-                    "Failed to read osRelease",
-                    entry("FILENAME=%s", osRelease.string().c_str()));
+                            "Failed to read osRelease",
+                            entry("FILENAME=%s", osRelease.string().c_str()));
 
                 // Try to get the version id from the mount directory name and
                 // call to delete it as this version may be corrupted. Dynamic
@@ -243,8 +251,8 @@ void ItemUpdater::processBMCImage()
             if (version.empty())
             {
                 log<level::ERR>(
-                    "Failed to read version from osRelease",
-                    entry("FILENAME=%s", osRelease.string().c_str()));
+                            "Failed to read version from osRelease",
+                            entry("FILENAME=%s", osRelease.string().c_str()));
 
                 // Try to delete the version, same as above if the
                 // OS_RELEASE_FILE does not exist.
@@ -269,7 +277,7 @@ void ItemUpdater::processBMCImage()
 
             // Read os-release from /etc/ to get the BMC extended version
             std::string extendedVersion =
-                VersionClass::getBMCExtendedVersion(osRelease);
+                    VersionClass::getBMCExtendedVersion(osRelease);
 
             auto path = fs::path(SOFTWARE_OBJPATH) / id;
 
@@ -286,8 +294,9 @@ void ItemUpdater::processBMCImage()
             {
                 // Create an association to the BMC inventory item
                 associations.emplace_back(std::make_tuple(
-                    ACTIVATION_FWD_ASSOCIATION, ACTIVATION_REV_ASSOCIATION,
-                    bmcInventoryPath));
+                                              ACTIVATION_FWD_ASSOCIATION,
+                                              ACTIVATION_REV_ASSOCIATION,
+                                              bmcInventoryPath));
 
                 // Create an active association since this image is active
                 createActiveAssociation(path);
@@ -299,21 +308,24 @@ void ItemUpdater::processBMCImage()
 
             // Create Version instance for this version.
             auto versionPtr = std::make_unique<VersionClass>(
-                bus, path, version, purpose, extendedVersion, "",
-                std::bind(&ItemUpdater::erase, this, std::placeholders::_1));
+                        bus, path, version, purpose, extendedVersion, "",
+                        std::bind(&ItemUpdater::erase,
+                                  this,
+                                  std::placeholders::_1));
             auto isVersionFunctional = versionPtr->isFunctional();
             if (!isVersionFunctional)
             {
                 versionPtr->deleteObject =
-                    std::make_unique<phosphor::software::manager::Delete>(
-                        bus, path, *versionPtr);
+                        std::make_unique<phosphor::software::manager::Delete>(
+                            bus, path, *versionPtr);
             }
             versions.insert(std::make_pair(id, std::move(versionPtr)));
 
             // Create Activation instance for this version.
             activations.insert(std::make_pair(
-                id, std::make_unique<Activation>(
-                        bus, path, *this, id, activationState, associations)));
+                                   id, std::make_unique<Activation>(
+                                       bus, path, *this, id, activationState,
+                                       associations)));
 
             // If Active, create RedundancyPriority instance for this
             // version.
@@ -333,9 +345,9 @@ void ItemUpdater::processBMCImage()
                     }
                 }
                 activations.find(id)->second->redundancyPriority =
-                    std::make_unique<RedundancyPriority>(
-                        bus, path, *(activations.find(id)->second), priority,
-                        false);
+                        std::make_unique<RedundancyPriority>(
+                          bus, path, *(activations.find(id)->second), priority,
+                          false);
             }
         }
     }
@@ -784,22 +796,25 @@ bool ItemUpdater::checkImage(const std::string& filePath,
 }
 
 #ifdef HOST_FIRMWARE_UPGRADE
-void ItemUpdater::createFirmwareObjectTree(const std::string& mainImageObjectPath,
+void
+ItemUpdater::createFirmwareObjectTree(const std::string& mainImageObjectPath,
                                            const std::string& imageDirPath)
-{  
+{
     auto firmwarePath = mainImageObjectPath;
-    // store the path objects related to image type (usually one if a image type can be detected)
+    // store the path objects related to image type
+    //  (usually one if a image type can be detected)
     std::vector<std::string> imageTypesToCreateObjects;
     // store path objects if machine is multi hosts
     std::vector<std::string> hostsToCreateObjects;
     if (isMultiHostMachine())
     {
-        boost::split(hostsToCreateObjects, OBMC_HOST_INSTANCES, boost::is_any_of(" "));
+        boost::split(hostsToCreateObjects,
+                     OBMC_HOST_INSTANCES, boost::is_any_of(" "));
     }
 
     // try to detect the image type and the binary image file
     HostImageType imageType(imageDirPath);
-    std::string msg = "firmware image file is '"  + imageType.imageFile() + '\'';
+    std::string msg = "firmware image file is '" + imageType.imageFile() + '\'';
     log<level::INFO>(msg.c_str());
 
     auto  imageTypeId = imageType.curTypeString();
@@ -808,22 +823,23 @@ void ItemUpdater::createFirmwareObjectTree(const std::string& mainImageObjectPat
     {   // only one image type
         typesToCreate.push_back(imageTypeId);
         msg = "Firmware image type: '" + imageType.curTypeString()+ '\'';
-        log<level::INFO>(msg.c_str());     
+        log<level::INFO>(msg.c_str());
     }
     else
-    {   /*
-         * create objects for all image types and give responsability to the user
-         */
-        log<level::WARNING>("Firmware image type NOT detected");        
+    {
+        // create objects for all image types and give responsability to user
+        log<level::WARNING>("Firmware image type NOT detected");
         typesToCreate  = HostImageType::availableTypes();
     }
-    for(size_t counter=0; counter < typesToCreate.size(); ++counter)
+    for (size_t counter=0; counter < typesToCreate.size(); ++counter)
     {
-        imageTypesToCreateObjects.push_back(firmwarePath + '/' + typesToCreate.at(counter));
+        imageTypesToCreateObjects.push_back(firmwarePath
+                                            + '/' + typesToCreate.at(counter));
     }
     // create a container object to store all necessary information
-    auto hostImageData = std::make_unique<FirmwareImageUpdateData>(imageType.curTypeString(),
-                                                                   imageType.imageFile());
+    auto hostImageData =
+            std::make_unique<FirmwareImageUpdateData>(imageType.curTypeString(),
+                                                      imageType.imageFile());
     for (size_t types=0; types < imageTypesToCreateObjects.size(); ++types)
     {
         if (hostsToCreateObjects.size() == 0)
@@ -832,17 +848,21 @@ void ItemUpdater::createFirmwareObjectTree(const std::string& mainImageObjectPat
                                        hostImageData.get());
         }
         else
+        {
             for (size_t hosts=0; hosts < hostsToCreateObjects.size(); ++hosts)
             {
                 createSingleFirmwareObject(imageTypesToCreateObjects.at(types)
-                                           + '/' + hostsToCreateObjects.at(hosts),
+                                           + '/'
+                                           + hostsToCreateObjects.at(hosts),
                                            hostImageData.get());
             }
+        }
     }
     // store the information for an image
     msg = "creating hosts information for the image " + mainImageObjectPath;
     log<level::INFO>(msg.c_str());
-    this->hostFirmwareObjects.insert(std::make_pair(mainImageObjectPath, std::move(hostImageData))); 
+    this->hostFirmwareObjects.insert(std::make_pair(mainImageObjectPath,
+                                                    std::move(hostImageData)));
 }
 
 
@@ -859,7 +879,7 @@ FirmwareImageUpdateData *
 ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
 {
     std::string  msg;
-    auto hostImageData = this->hostFirmwareObjects.find(imagePath)->second.get();
+    auto hostImageData = hostFirmwareObjects.find(imagePath)->second.get();
     if (hostImageData == nullptr)
     {
         msg = "firmware update information not found for image "
@@ -874,18 +894,19 @@ ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
         log<level::EMERG>(msg.c_str());
         return nullptr;
     }
-    // special case: single host with image type does not require 'Update' property being true
+    // special case: single host with image type does not
+    //      require 'Update' property being true
     if (isMultiHostMachine() == false
             && hostImageData->image_type.empty() == false
             && hostImageData->pathObjects.size() == 1)
     {
         hostImageData->pathObjects.at(0)->setUpdateRequired();
     }
-    auto counter = hostImageData->pathObjects.size();  
+    auto counter = hostImageData->pathObjects.size();
     while (counter-- > 0)
-    {        
-        // make sure the image type is correct,
-        // when it is unknown the user is expected to set that using set-propety over the right object path
+    {
+        // make sure the image type is correct, when it is unknown the user is
+        //  expected to set that using set-propety over the right object path
         if (hostImageData->pathObjects.at(counter)->isUpdateRequired())
         {
             // get the image from object path
@@ -896,7 +917,8 @@ ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
                 str.erase(slash_position, str.size() - slash_position);
                 slash_position = str.find_last_of('/');
             }
-            auto image_type = str.substr(slash_position+1, str.size() - slash_position -1);
+            auto image_type = str.substr(slash_position+1,
+                                         str.size() - slash_position -1);
             if (hostImageData->image_type.empty() == true)
             {
                 hostImageData->image_type = image_type;
@@ -905,7 +927,9 @@ ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
             {
                 if (image_type != hostImageData->image_type)
                 {
-                    msg = imagePath + " different image-types have the property 'Update' set to true";
+                    msg = imagePath
+                            + " different image-types have the property"
+                              " 'Update' set to true";
                     log<level::ERR>(msg.c_str());
                     return nullptr;
                 }
@@ -915,7 +939,9 @@ ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
     }
     if (hostImageData->hostsToUpdate == 0)
     {
-        msg = imagePath + " at least one host needs to have the property 'Update' set to true";
+        msg = imagePath
+                + " at least one host needs to have the property 'Update'"
+                  " set to true";
         log<level::ERR>(msg.c_str());
         return nullptr;
     }
@@ -933,7 +959,8 @@ bool ItemUpdater::isMultiHostMachine() const
 {
     bool multihost = false;  // single host is the default
 #if defined(OBMC_HOST_INSTANCES)
-    if (::strcmp("0", OBMC_HOST_INSTANCES) != 0 && ::strchr(OBMC_HOST_INSTANCES, ' '))
+    if (::strcmp("0", OBMC_HOST_INSTANCES) != 0
+            && ::strchr(OBMC_HOST_INSTANCES, ' '))
     {
         multihost = true;
     }

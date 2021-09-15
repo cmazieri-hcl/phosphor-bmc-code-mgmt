@@ -282,7 +282,6 @@ bool Signature::verifyFile(const fs::path& file, const fs::path& sigFile,
                            const fs::path& publicKey,
                            const std::string& hashFunc)
 {
-
     // Check existence of the files in the system.
     if (!(fs::exists(file) && fs::exists(sigFile)))
     {
@@ -388,7 +387,6 @@ inline RSA* Signature::createPublicRSA(const fs::path& publicKey)
 
 CustomMap Signature::mapFile(const fs::path& path, size_t size)
 {
-
     CustomFd fd(open(path.c_str(), O_RDONLY));
 
     return CustomMap(mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd(), 0),
