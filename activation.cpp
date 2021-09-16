@@ -448,53 +448,52 @@ void Activation::onHostStateChanges(sdbusplus::message::message& msg)
     msg.read(newStateID, newStateObjPath, newStateUnit, newStateResult);
     auto baseServiceFile = m_hostFirmwareData->baseServiceFileName(versionId);
     // checks if newStateUnit starts with obmc-flash-host<img-type>@<versionId>
-    if (newStateUnit.rfind(baseServiceFile, 0) == 0)
+    if (newStateUnit.rfind(baseServiceFile, 0) != 0)
     {
-        if (newStateResult == "done")
+        return;
+    }
+    if (newStateResult == "done")
+    {
+        auto currentHostBeingUpdated =
+                m_hostFirmwareData->getOnGoingHostByService(newStateUnit);
+        m_hostFirmwareData->setUpdateCompleted(currentHostBeingUpdated);
+        decltype(activationProgress->progress()) currentProgres =
+                activationProgress->progress();
+        auto oneHostPercent = m_hostFirmwareData->stepHostUpdate();
+        currentProgres = currentProgres <  oneHostPercent ?
+                    oneHostPercent : currentProgres + oneHostPercent;
+        activationProgress->progress(currentProgres);
+        std::string str = "Firmware upgrade finished for "
+                + currentHostBeingUpdated->hostObjectPath();
+        log<level::INFO>(str.c_str());
+        str = "Total firmware upgrade status is %"
+                + std::to_string(currentProgres);
+        log<level::INFO>(str.c_str());
+        if (m_hostFirmwareData->isUpdateActivationDone() == true)
         {
-            auto currentHostBeingUpdated =
-                    m_hostFirmwareData->getOnGoingHostByService(newStateUnit);
-            m_hostFirmwareData->setUpdateCompleted(currentHostBeingUpdated);
-            decltype(activationProgress->progress()) currentProgres =
-                         activationProgress->progress();
-            auto oneHostPercent = m_hostFirmwareData->stepHostUpdate();
-            currentProgres = currentProgres <  oneHostPercent ?
-                               oneHostPercent : currentProgres + oneHostPercent;
-            activationProgress->progress(currentProgres);
-             std::string str = "Firmware upgrade finished for "
-                               + currentHostBeingUpdated->hostObjectPath();
-            log<level::INFO>(str.c_str());
-            str = "Total firmware upgrade status is %"
-                               + std::to_string(currentProgres);
-            log<level::INFO>(str.c_str());
-            if (m_hostFirmwareData->isUpdateActivationDone() == true)
+            // unsubscribe to systemd signals
+            unsubscribeFromSystemdSignals();
+            // Set Activation value to active
+            activation(softwareServer::Activation::Activations::Active);
+            log<level::INFO>("Firmware upgrade completed successfully.");
+            /**
+             * firmwareVersion used to be biosVersion, check master branch
+             * parent.firmwareVersion->version(
+             *         parent.versions.find(versionId)->second->version());
+             */
+            if (m_hostFirmwareData->areAllHostsUpdated() == true)
             {
-                // unsubscribe to systemd signals
-                unsubscribeFromSystemdSignals();
-                // Set Activation value to active
-                activation(softwareServer::Activation::Activations::Active);
-                log<level::INFO>("Firmware upgrade completed successfully.");
-                /**
-                 * hostFirmwareObjects used to be biosVersion, check master
-                 *  branch
-                parent.hostFirmwareObjects->version(
-                            parent.versions.find(versionId)->second->version());
-                */
-                if (m_hostFirmwareData->areAllHostsUpdated() == true)
-                {
-                    // Remove version object from image manager
-                    deleteImageManagerObject();
-                }
+                // Remove version object from image manager
+                deleteImageManagerObject();
             }
         }
-        else if (newStateResult == "failed")
-        {
-            // Set Activation value to Failed
-            activation(softwareServer::Activation::Activations::Failed);
-            log<level::ERR>("Firmware upgrade failed.");
-        }
     }
-    return;
+    else if (newStateResult == "failed")
+    {
+        // Set Activation value to Failed
+        activation(softwareServer::Activation::Activations::Failed);
+        log<level::ERR>("Firmware upgrade failed.");
+    }
 }
 #endif // HOST_FIRMWARE_UPGRADE
 
