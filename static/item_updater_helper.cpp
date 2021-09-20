@@ -1,6 +1,7 @@
 #include "item_updater_helper.hpp"
 
 #include "utils.hpp"
+#include <filesystem>
 
 namespace phosphor
 {
@@ -31,9 +32,18 @@ void Helper::factoryReset()
     utils::execute("/sbin/fw_setenv", "openbmconce", "factory-reset");
 }
 
-void Helper::removeVersion(const std::string& /* versionId */)
+/**
+ * @brief Helper::removeVersion() removes the /tmp/images/versionId
+ * @param versionId
+ */
+void Helper::removeVersion(const std::string&  versionId)
 {
-    // Empty
+    std::filesystem::path imageDirPath = std::string{IMG_UPLOAD_DIR};
+    imageDirPath /= versionId;
+    if (std::filesystem::exists(imageDirPath))
+    {
+        std::filesystem::remove_all(imageDirPath);
+    }
 }
 
 void Helper::updateUbootVersionId(const std::string& /* versionId */)
