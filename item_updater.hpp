@@ -251,7 +251,8 @@ class ItemUpdater : public ItemUpdaterInherit
      *  external service could set the correct Firmware version.
      *  On Firmware code update, the version is updated accordingly.
      */
-    void createFirmwareObjectTree(const std::string& mainImageObjectPath,
+    void createFirmwareObjectTree(const std::string& versionId,
+                                  const std::string& mainImageObjectPath,
                                   const std::string& imageDirPath);
     void createSingleFirmwareObject(const std::string& pathObject,
                                     FirmwareImageUpdateData *container);
@@ -261,10 +262,10 @@ class ItemUpdater : public ItemUpdaterInherit
     std::unique_ptr<VersionClass> firmwareVersion;
     /** @brief Persistent Hosts Object mapping */
     HostFirmwareObjectsMap  hostFirmwareObjects;
-
+    void clearHostFirwareObjects(const std::string& versionId);
     bool isMultiHostMachine() const;
     FirmwareImageUpdateData *
-          canPerformUpdateFirmware(const std::string &imagePath);
+          canPerformUpdateFirmware(const std::string &versionId);
 #endif
 };
 

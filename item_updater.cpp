@@ -186,7 +186,9 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
 #ifdef HOST_FIRMWARE_UPGRADE
         if (topLevelFirmareHostObjectPath.empty() == false)
         {
-            createFirmwareObjectTree(topLevelFirmareHostObjectPath, filePath);
+            createFirmwareObjectTree(versionId,
+                                     topLevelFirmareHostObjectPath,
+                                     filePath);
             topLevelFirmareHostObjectPath.clear();
         }
 #endif
@@ -797,8 +799,9 @@ bool ItemUpdater::checkImage(const std::string& filePath,
 
 #ifdef HOST_FIRMWARE_UPGRADE
 void
-ItemUpdater::createFirmwareObjectTree(const std::string& mainImageObjectPath,
-                                           const std::string& imageDirPath)
+ItemUpdater::createFirmwareObjectTree(const std::string& versionId,
+                                      const std::string& mainImageObjectPath,
+                                      const std::string& imageDirPath)
 {
     auto firmwarePath = mainImageObjectPath;
     // store the path objects related to image type
@@ -859,9 +862,9 @@ ItemUpdater::createFirmwareObjectTree(const std::string& mainImageObjectPath,
         }
     }
     // store the information for an image
-    msg = "creating hosts information for the image " + mainImageObjectPath;
+    msg = "creating hosts information for the image id " + versionId;
     log<level::INFO>(msg.c_str());
-    this->hostFirmwareObjects.insert(std::make_pair(mainImageObjectPath,
+    this->hostFirmwareObjects.insert(std::make_pair(versionId,
                                                     std::move(hostImageData)));
 }
 
@@ -875,22 +878,27 @@ void ItemUpdater::createSingleFirmwareObject(const std::string &pathObject,
     log<level::INFO>(msg.c_str());
 }
 
+void ItemUpdater::clearHostFirwareObjects(const std::string &versionId)
+{
+   hostFirmwareObjects.erase(versionId);
+}
+
 FirmwareImageUpdateData *
-ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
+ItemUpdater::canPerformUpdateFirmware(const std::string& versionId)
 {
     std::string  msg;
-    auto hostImageData = hostFirmwareObjects.find(imagePath)->second.get();
+    auto hostImageData = hostFirmwareObjects.find(versionId)->second.get();
     if (hostImageData == nullptr)
     {
-        msg = "firmware update information not found for image "
-                          +  imagePath;
+        msg = "firmware update information not found for image id "
+                          +  versionId;
         log<level::EMERG>(msg.c_str());
         return nullptr;
     }
     if (hostImageData->image_binay_file.empty() == true)
     {
         msg = "binary image file unkown for the image id "
-                               +  imagePath;
+                               +  versionId;
         log<level::EMERG>(msg.c_str());
         return nullptr;
     }
@@ -927,9 +935,9 @@ ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
             {
                 if (image_type != hostImageData->image_type)
                 {
-                    msg = imagePath
-                            + " different image-types have the property"
-                              " 'Update' set to true";
+                    msg = "image id " + versionId +
+                          " has different 'image types with the"
+                          " property 'Update' set to true";
                     log<level::ERR>(msg.c_str());
                     return nullptr;
                 }
@@ -939,15 +947,16 @@ ItemUpdater::canPerformUpdateFirmware(const std::string& imagePath)
     }
     if (hostImageData->hostsToUpdate == 0)
     {
-        msg = imagePath
-                + " at least one host needs to have the property 'Update'"
-                  " set to true";
+        msg = "image id " + versionId +
+                + " needs at least one host with the property"
+                  " 'Update' set to true";
         log<level::ERR>(msg.c_str());
         return nullptr;
     }
     if (hostImageData->image_type.empty() == true)
     {
-        msg = imagePath + " Could not determine the image type";
+        msg = "could not determine the image type for the image id "
+                + versionId;
         log<level::ERR>(msg.c_str());
         return nullptr;
     }
