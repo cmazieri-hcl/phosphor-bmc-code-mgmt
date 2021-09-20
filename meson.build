@@ -127,6 +127,7 @@ subdir('xyz/openbmc_project/Software/FirmwareUpdate')
 
 image_updater_sources = files(
     'activation.cpp',
+    'hostactivation.cpp',
     'images.cpp',
     'item_updater.cpp',
     'item_updater_main.cpp',
