@@ -264,6 +264,7 @@ class ItemUpdater : public ItemUpdaterInherit
     HostFirmwareObjectsMap  hostFirmwareObjects;
     void clearHostFirwareObjects(const std::string& versionId);
     bool isMultiHostMachine() const;
+    void watchHostImageRemoval(const std::string &versionId);
     FirmwareImageUpdateData *
           canPerformUpdateFirmware(const std::string &versionId);
 #endif

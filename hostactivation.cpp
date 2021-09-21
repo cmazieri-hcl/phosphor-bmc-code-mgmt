@@ -27,12 +27,10 @@
 #include <sdbusplus/exception.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
 #include <xyz/openbmc_project/Software/Version/error.hpp>
-#include <boost/asio.hpp>
-#include <boost/asio/io_service.hpp>
+#include "imagewatcher.hpp"
 #include <filesystem>
 #include <unistd.h>
 
-extern boost::asio::io_context& getIOContext();
 
 namespace phosphor
 {
@@ -139,16 +137,9 @@ void Activation::onHostStateChanges(sdbusplus::message::message& msg)
             if (m_hostFirmwareData->areAllHostsUpdated() == true)
             {
                 log<level::INFO>("performing cleaning...");
-                // Remove version object from image manager
-                // it also removes the image from disk
-                deleteImageManagerObject();
-                parent.erase(this->versionId);
-                parent.clearHostFirwareObjects(versionId);
-                m_hostFirmwareData = nullptr;
-                // Delete the uploaded activation
-                auto lbdaErase = [this](){this->parent.erase(this->versionId);};
-                boost::asio::io_service io_service;
-                io_service.post(lbdaErase);
+                // just remove the image, the watcher will catch it
+                Helper helper(bus);
+                helper.removeVersion(versionId);
             }
         }
     }
@@ -158,6 +149,44 @@ void Activation::onHostStateChanges(sdbusplus::message::message& msg)
         activation(softwareServer::Activation::Activations::Failed);
         log<level::ERR>("Firmware upgrade failed.");
     }
+}
+
+/**
+ * @brief Activation::watchHostImageRemoval()
+ *
+ * This function is supposed to work on a separated thread.
+ *
+ * The Activation::clearHostSoftwareInformation() will be called when
+ *   the image in /tmp/images/<versionId> is removed.
+ *
+ * The image is removed either by the the phosphor-image-updater or by the
+ *   user when not all hosts request update.
+ */
+void Activation::watchHostImageRemoval()
+{
+    ImageWatcher watcher;
+    if (watcher.createWatcher(versionId) == 0)
+    {
+        auto lambda = [this]() -> void {this->clearHostSoftwareInformation();};
+        watcher.watch(lambda);
+    }
+    else
+    {
+       log<level::ERR>("ImageWatcher::createWatcher() failed");
+    }
+}
+
+
+void Activation::clearHostSoftwareInformation()
+{
+    log<level::INFO>("Activation::clearHostSoftwareInformation(): "
+                      "cleaninig all host data");
+    // Remove version object from image manager
+    // it also removes the image from disk
+    deleteImageManagerObject();
+    parent.erase(versionId);
+    parent.clearHostFirwareObjects(versionId);
+    m_hostFirmwareData = nullptr;
 }
 
 } // namespace updater

@@ -101,7 +101,8 @@ configure_file(output: 'config.h', configuration: conf)
 deps = [
     dependency('phosphor-dbus-interfaces'),
     dependency('phosphor-logging'),
-    dependency('sdbusplus')
+    dependency('sdbusplus'),
+    dependency('threads')
 ]
 
 ssl = dependency('openssl')
@@ -128,6 +129,7 @@ subdir('xyz/openbmc_project/Software/FirmwareUpdate')
 image_updater_sources = files(
     'activation.cpp',
     'hostactivation.cpp',
+    'imagewatcher.cpp',
     'images.cpp',
     'item_updater.cpp',
     'item_updater_main.cpp',

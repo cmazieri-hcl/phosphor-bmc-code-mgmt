@@ -251,8 +251,12 @@ void Activation::deleteImageManagerObject()
     }
     catch (const SdBusError& e)
     {
-        log<level::ERR>("Error in Deleting image from image manager",
-                        entry("VERSIONPATH=%s", path.c_str()));
+        std::string msg("Error in Deleting image from image manager"
+                        " VERSIONPATH=");
+        msg += path;
+        msg += ".\nPerhaps removed manually";
+
+        log<level::WARNING>(msg.c_str());
         return;
     }
 }

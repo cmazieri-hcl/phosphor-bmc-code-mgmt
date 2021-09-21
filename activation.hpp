@@ -345,14 +345,16 @@ class Activation : public ActivationInherit, public Flash
 #endif
 
 #ifdef HOST_FIRMWARE_UPGRADE
-private:
+ public:
+     void watchHostImageRemoval();
+ private:
     /* @brief write to Host flash function */
     void flashWriteHost();
 
     /** @brief Function that acts on Firmware upgrade service file state changes
      */
     void onHostStateChanges(sdbusplus::message::message&);
-
+    void clearHostSoftwareInformation();
     FirmwareImageUpdateData*  m_hostFirmwareData = nullptr;
 #endif
 };

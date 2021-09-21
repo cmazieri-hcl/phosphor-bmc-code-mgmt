@@ -17,13 +17,14 @@
 #include "xyz/openbmc_project/Common/error.hpp"
 #include "xyz/openbmc_project/Software/Image/error.hpp"
 
-
 #include <filesystem>
 #include <fstream>
 #include <queue>
 #include <set>
 #include <string>
+#include <thread>
 #include <boost/algorithm/string.hpp>
+
 
 namespace phosphor
 {
@@ -183,6 +184,7 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
                                                                   path,
                                                                   *versionPtr);
         versions.insert(std::make_pair(versionId, std::move(versionPtr)));
+
 #ifdef HOST_FIRMWARE_UPGRADE
         if (topLevelFirmareHostObjectPath.empty() == false)
         {
@@ -192,6 +194,7 @@ void ItemUpdater::createActivation(sdbusplus::message::message& msg)
             topLevelFirmareHostObjectPath.clear();
         }
 #endif
+
     }
     return;
 }
@@ -866,8 +869,32 @@ ItemUpdater::createFirmwareObjectTree(const std::string& versionId,
     log<level::INFO>(msg.c_str());
     this->hostFirmwareObjects.insert(std::make_pair(versionId,
                                                     std::move(hostImageData)));
+    /* create a new thread to watch for a possible
+     *  image removal before updating all hosts  in case of multi-host machine.
+     * However, when all hosts are updated the image is removed forcing
+     *  the same flow to be followed and the thread be terminated.
+     */
+    auto lambda = [this, versionId](){this->watchHostImageRemoval(versionId);};
+    std::thread watchRemovalThread(lambda);
+    watchRemovalThread.detach();
 }
 
+
+void ItemUpdater::watchHostImageRemoval(const std::string& versionId)
+{
+
+     Activation* hostActivation = activations.find(versionId)->second.get();
+     if (hostActivation != nullptr)
+     {
+         hostActivation->watchHostImageRemoval();
+     }
+     else
+     {
+         std::string msg("Could not find Activation object for version id ");
+         msg += versionId;
+         log<level::ERR>(msg.c_str());
+     }
+}
 
 void ItemUpdater::createSingleFirmwareObject(const std::string &pathObject,
                                              FirmwareImageUpdateData *container)
@@ -976,7 +1003,7 @@ bool ItemUpdater::isMultiHostMachine() const
 #endif
     return multihost;
 }
-#endif
+#endif // HOST_FIRMWARE_UPGRADE
 
 } // namespace updater
 } // namespace software
