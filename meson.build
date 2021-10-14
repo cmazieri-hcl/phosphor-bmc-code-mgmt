@@ -139,6 +139,9 @@ image_updater_sources = files(
     'msl_verify.cpp',
     'firmwareupdate.cpp',
     'hostimagetype.cpp',
+    'ipmiutils.cpp',
+    'ipmidbusutils.cpp',
+    'qemuanswer.cpp',
 )
 
 if get_option('bmc-layout').contains('static')
