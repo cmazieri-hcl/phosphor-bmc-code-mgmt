@@ -837,29 +837,25 @@ ItemUpdater::createFirmwareObjectTree(const std::string& versionId,
         log<level::WARNING>("Firmware image type NOT detected");
         typesToCreate  = HostImageType::availableTypes();
     }
-    for (size_t counter=0; counter < typesToCreate.size(); ++counter)
+    for (const auto& type : typesToCreate)
     {
-        imageTypesToCreateObjects.push_back(firmwarePath
-                                            + '/' + typesToCreate.at(counter));
+        imageTypesToCreateObjects.push_back(firmwarePath + '/' + type);
     }
     // create a container object to store all necessary information
     auto hostImageData =
             std::make_unique<FirmwareImageUpdateData>(imageType.curTypeString(),
                                                       imageType.imageFile());
-    for (size_t types=0; types < imageTypesToCreateObjects.size(); ++types)
+    for (const auto& imgType : imageTypesToCreateObjects)
     {
-        if (hostsToCreateObjects.size() == 0)
+        if (hostsToCreateObjects.empty() == true)
         {
-            createSingleFirmwareObject(imageTypesToCreateObjects.at(types),
-                                       hostImageData.get());
+            createSingleFirmwareObject(imgType, hostImageData.get());
         }
         else
         {
-            for (size_t hosts=0; hosts < hostsToCreateObjects.size(); ++hosts)
+            for (const auto& host : hostsToCreateObjects)
             {
-                createSingleFirmwareObject(imageTypesToCreateObjects.at(types)
-                                           + '/'
-                                           + hostsToCreateObjects.at(hosts),
+                createSingleFirmwareObject(imgType + '/' + host,
                                            hostImageData.get());
             }
         }
@@ -871,7 +867,7 @@ ItemUpdater::createFirmwareObjectTree(const std::string& versionId,
                                                     std::move(hostImageData)));
     /* create a new thread to watch for a possible
      *  image removal before updating all hosts  in case of multi-host machine.
-     * However, when all hosts are updated the image is removed forcing
+     * Note: when all hosts are updated the image is removed forcing
      *  the same flow to be followed and the thread be terminated.
      */
     auto lambda = [this, versionId](){this->watchHostImageRemoval(versionId);};
