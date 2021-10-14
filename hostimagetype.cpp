@@ -36,6 +36,7 @@ namespace updater
 std::vector<std::string>  HostImageType::m_types =
         HostImageType::buildImageTypeArray();
 
+
 HostImageType::HostImageType(const std::string &imageDirectory)
     : m_imageTypeId(Unknown)
 {
@@ -67,10 +68,12 @@ HostImageType::HostImageType(const std::string &imageDirectory)
     }
 }
 
+
 HostImageType::~HostImageType()
 {
     // empty destructor
 }
+
 
 std::string HostImageType::type(Type id)
 {
@@ -81,6 +84,7 @@ std::string HostImageType::type(Type id)
     }
     return ret;
 }
+
 
 std::vector<std::string> HostImageType::availableTypes()
 {
@@ -119,25 +123,26 @@ std::string HostImageType::curTypeString() const
     return HostImageType::type(m_imageTypeId);
 }
 
+
 HostImageType::Type HostImageType::curType() const
 {
     return m_imageTypeId;
 }
+
 
 std::string HostImageType::imageFile() const
 {
     return m_imageFile;
 }
 
+
 bool HostImageType::guessTypeByName(const std::vector<std::string> &files)
 {
-    bool gotType = false;
-    auto fileCounter = files.size();
-    while (fileCounter-- && gotType == false)
+    for (const auto& file : files)
     {
-        auto name =
-              std::filesystem::path(files.at(fileCounter)).filename().string();
-        for (size_t counter = 0; counter < name.size(); ++counter)
+        auto name = std::filesystem::path(file).filename().string();
+        size_t counter = 0;
+        for (counter = 0; counter < name.size(); ++counter)
         {   // an image name such as "bios.bin" will became "bios bin"
             if (name[counter] == '_'
                     || name[counter] == '-' || name[counter] == '.')
@@ -145,11 +150,10 @@ bool HostImageType::guessTypeByName(const std::vector<std::string> &files)
                 name.replace(counter, 1, " ");
             }
         }
-        for (size_t counter=0; counter < HostImageType::m_types.size();
-             ++counter)
+        counter = 0;
+        for (const auto& img_type : HostImageType::m_types)
         {
-            auto type_lowercase_plus_space = HostImageType::m_types.at(counter)
-                                              + ' ';
+            auto type_lowercase_plus_space = img_type + ' ';
             /* convert file name to lowercase as the type names are in lowercase
              *   search in name for strings such as "bios " or "cpld "
              *     (having space at end)
@@ -160,32 +164,30 @@ bool HostImageType::guessTypeByName(const std::vector<std::string> &files)
                     != std::string::npos )
             {
                 m_imageTypeId = static_cast<Type>(counter);
-                gotType = true;
-                break;
+                return true;
             }
+            ++counter;
         }
     }
-    return gotType;
+    return false;
 }
+
 
 bool HostImageType::guessTypeByContent(const std::vector<std::string> &files)
 {
-    bool gotType = false;
-    for (size_t counterType = 0;
-         gotType == false  && counterType < HostImageType::m_types.size();
-         ++counterType)
+    size_t counterType = 0;
+    for (const auto& img_type : HostImageType::m_types)
     {
-        auto  upper_type = HostImageType::m_types.at(counterType);
+        auto  upper_type = img_type;
         boost::to_upper(upper_type);
         const std::string regStr = "^" + upper_type
                                        + "$|\\s"
                                        + upper_type
                                        + "\\s";
         const std::regex reg(regStr);
-        auto fileCounter = files.size();
-        while (fileCounter-- && gotType == false)
+        for (const auto& file : files)
         {
-            std::ifstream stream(files.at(fileCounter), std::ios_base::in);
+            std::ifstream stream(file, std::ios_base::in);
             if (stream.is_open() == true)
             {
                 char line[LINE_BUFFER_SIZE];
@@ -196,16 +198,17 @@ bool HostImageType::guessTypeByContent(const std::vector<std::string> &files)
                     if (std::regex_search(line, reg) == true)
                     {
                         m_imageTypeId = static_cast<Type>(counterType);
-                        gotType = true;
-                        break;
+                        return true;
                     }
                 }
             }
             stream.close();
         }
+        ++counterType;
     }
-    return gotType;
+    return false;
 }
+
 
 void HostImageType::gessImageName(const std::vector<std::string> &files)
 {
@@ -224,15 +227,18 @@ void HostImageType::gessImageName(const std::vector<std::string> &files)
     }
 }
 
+
 bool HostImageType::fileIsBinary(const std::string &filename) const
 {
      return fileContent(filename) == HostImageType::Binary;
 }
 
+
 bool HostImageType::fileIsText(const std::string &filename) const
 {
     return fileContent(filename) == HostImageType::Text;
 }
+
 
 HostImageType::FileContent
 HostImageType::fileContent(const std::string &filename) const
