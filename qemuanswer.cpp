@@ -51,7 +51,7 @@ std::string
 QemuAnswer::createFunctionKey(const std::vector<std::string> &vect)
 {
     std::string key;
-    for(const std::string& item: vect)
+    for (const std::string& item: vect)
     {
         if (item.size() > 0 && item.at(0) != ' ')
         {
@@ -104,7 +104,7 @@ void QemuAnswer::parseQemuAnswerFile(const std::string& filename)
     }
     AnswerData* answer = nullptr;
     std::string line;
-    while(std::getline(file, line))
+    while (std::getline(file, line))
     {
         boost::algorithm::trim(line);
         if (line.empty() == true || line.at(0) == '#') {continue;}
