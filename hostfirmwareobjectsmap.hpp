@@ -201,7 +201,7 @@ struct FirmwareImageUpdateData
         return percent;
     }
 
-    std::string baseServiceFileName(const std::string& imageId)
+    std::string baseServiceFileName(const std::string& imageId) const
     {
         std::string basename = "obmc-flash-host-" + image_type + "@" + imageId;
         return basename;

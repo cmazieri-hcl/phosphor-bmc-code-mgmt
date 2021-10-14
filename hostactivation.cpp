@@ -194,4 +194,3 @@ void Activation::clearHostSoftwareInformation()
 } // namespace phosphor
 
 #endif // HOST_FIRMWARE_UPGRADE
-

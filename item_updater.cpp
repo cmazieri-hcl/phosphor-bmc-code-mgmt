@@ -878,7 +878,6 @@ ItemUpdater::createFirmwareObjectTree(const std::string& versionId,
 
 void ItemUpdater::watchHostImageRemoval(const std::string& versionId)
 {
-
      Activation* hostActivation = activations.find(versionId)->second.get();
      if (hostActivation != nullptr)
      {

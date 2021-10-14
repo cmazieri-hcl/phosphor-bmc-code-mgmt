@@ -80,7 +80,7 @@ class HostImageTypeTest : public testing::Test
     std::string _me_dir;
     std::string _none_dir;
 
-private:
+ private:
     void createImageDirectories()
     {
         _bios_dir = _directory + '/'+ "bios";

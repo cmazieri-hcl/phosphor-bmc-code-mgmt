@@ -53,7 +53,7 @@ int ImageWatcher::onImageRemoved(sd_event_source*  /*source*/,
                                  uint32_t revents,
                                  void* userdata)
 {
-    if (!(revents & EPOLLIN))
+    if ((revents & EPOLLIN) == 0)
     {
         return 0;
     }
