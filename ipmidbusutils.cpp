@@ -89,7 +89,11 @@ Dbus::objectTreeValues(const std::string &service,
                        const std::string &interface)
 {
     ObjectPropertyStringValue tree;
-    auto emulator_answer = qemuAnswer(__FUNCTION__, service, path ,interface);
+    auto emulator_answer = QemuAnswer::find(_qemu_emulator_returns.get(),
+                                            __FUNCTION__,
+                                            service,
+                                            path,
+                                            interface);
     if (emulator_answer != nullptr)
     {
         qemuAnswerForObjectTreeData(emulator_answer, &tree);
@@ -114,7 +118,11 @@ Dbus::objectTreeData(const std::string &service,
                      const std::string &interface)
 {
     ObjectDataSearchable objectsData;
-    auto emulator_answer = qemuAnswer(__FUNCTION__, service, path ,interface);
+    auto emulator_answer = QemuAnswer::find(_qemu_emulator_returns.get(),
+                                            __FUNCTION__,
+                                            service,
+                                            path,
+                                            interface);
     if (emulator_answer != nullptr)
     {
         qemuAnswerForObjectTreeData(emulator_answer, &objectsData.objectData);
@@ -239,33 +247,6 @@ void Dbus::qemuAnswerForObjectTreeData(const QemuAnswer::AnswerData *answer,
     {
          (*dataTree)[objectPathKey] = propertyValuesMap;
     }
-}
-
-
-const QemuAnswer::AnswerData *
-Dbus::qemuAnswer(const std::string &func,
-                 const std::string &param1,
-                 const std::string &param2,
-                 const std::string &param3)
-{
-    const QemuAnswer::AnswerData *answer = nullptr;
-    auto qemu_returns = _qemu_emulator_returns.get();
-    if (qemu_returns != nullptr)
-    {
-        std::vector<std::string> funcKey{func};
-        if (param1.empty() == false) {funcKey.push_back(param1);}
-        if (param2.empty() == false) {funcKey.push_back(param2);}
-        if (param3.empty() == false) {funcKey.push_back(param3);}
-        auto functionKey  = QemuAnswer::createFunctionKey(funcKey);
-        answer = qemu_returns->find(functionKey);
-#if defined(PRINT_DATA_STRUCTURES) // set in development environment only
-        if (answer != nullptr)
-        {
-            printf("Dbus::qemuAnswer(): found key %s\n", functionKey.c_str());
-        }
-#endif
-    }
-    return answer;
 }
 
 

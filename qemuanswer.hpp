@@ -133,13 +133,24 @@ class QemuAnswer
      */
     static bool isEmulatorInstanceQEMU();
 
+
+    /** find() static method receiving an object and checking it it is valid
+     *
+     */
+    static const QemuAnswer::AnswerData * find(QemuAnswer *answerObj,
+                                               const std::string& func,
+                                               const std::string& param1 = {},
+                                               const std::string& param2 = {},
+                                               const std::string& param3 = {});
+
+    /** @brief returns true when there is no answer stored*/
+    bool        isEmpty() const;
+
     /** @brief returns an answer if present in file passed by the constructor
      *  @param functionkey must be created by @sa createFunctionKey()
      */
     const AnswerData * find(const std::string& functionkey) const;
 
-    /** @brief returns true when there is no answer stored*/
-    bool        isEmpty() const;
  private:
     static std::string createFunctionKey(const std::string& descriptionLine);
     void parseQemuAnswerFile(const std::string& filename);

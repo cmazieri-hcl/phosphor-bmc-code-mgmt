@@ -101,10 +101,6 @@ public:
     void qemuAnswerForObjectTreeData(const QemuAnswer::AnswerData *answer,
                                      ObjectPropertyStringValue *dataTree);
 
-    const QemuAnswer::AnswerData * qemuAnswer(const std::string& func,
-                                              const std::string& param1 = {},
-                                              const std::string& param2 = {},
-                                              const std::string& param3 = {});
  private:
     sdbusplus::bus::bus&          _bus;
     std::unique_ptr<QemuAnswer>   _qemu_emulator_returns;
