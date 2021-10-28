@@ -85,11 +85,12 @@ QemuAnswer::find(const std::string &functionkey) const
 }
 
 
-const QemuAnswer::AnswerData *QemuAnswer::find(QemuAnswer *answerObj,
-                                               const std::string &func,
-                                               const std::string &param1,
-                                               const std::string &param2,
-                                               const std::string &param3)
+const QemuAnswer::AnswerData *
+QemuAnswer::find(QemuAnswer *answerObj,
+                 const std::string &func,
+                 const std::string &param1,
+                 const std::string &param2,
+                 const std::string &param3)
 {
     const QemuAnswer::AnswerData *answer = nullptr;
     if (answerObj != nullptr)
@@ -98,8 +99,7 @@ const QemuAnswer::AnswerData *QemuAnswer::find(QemuAnswer *answerObj,
         if (param1.empty() == false) {funcKey.push_back(param1);}
         if (param2.empty() == false) {funcKey.push_back(param2);}
         if (param3.empty() == false) {funcKey.push_back(param3);}
-        auto functionKey  = QemuAnswer::createFunctionKey(funcKey);
-        answer = answerObj->find(functionKey);
+        answer = answerObj->find(QemuAnswer::createFunctionKey(funcKey));
     }
     return answer;
 }
