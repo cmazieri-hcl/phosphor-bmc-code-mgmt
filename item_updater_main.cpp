@@ -1,6 +1,6 @@
 #include "config.h"
 
-#include "item_updater.hpp"
+#include "item_updater_bmc.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <sdbusplus/asio/connection.hpp>
@@ -20,9 +20,9 @@ int main()
     // Add sdbusplus ObjectManager.
     sdbusplus::server::manager::manager objManager(bus, SOFTWARE_OBJPATH);
 
-    phosphor::software::updater::ItemUpdater updater(bus, SOFTWARE_OBJPATH);
+    phosphor::software::updater::ItemUpdaterBmc updater(bus, SOFTWARE_OBJPATH);
 
-    bus.request_name(BUSNAME_UPDATER);
+    bus.request_name(HOST_BUS_UPDATER);
 
     getIOContext().run();
 

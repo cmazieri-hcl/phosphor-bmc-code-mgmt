@@ -26,7 +26,8 @@ conf = configuration_data()
 
 # DBus information
 conf.set_quoted('BMC_INVENTORY_INTERFACE', 'xyz.openbmc_project.Inventory.Item.Bmc')
-conf.set_quoted('BUSNAME_UPDATER', 'xyz.openbmc_project.Software.BMC.Updater')
+conf.set_quoted('BMC_BUS_UPDATER', 'xyz.openbmc_project.Software.BMC.Updater')
+conf.set_quoted('HOST_BUS_UPDATER', 'xyz.openbmc_project.Software.HOST.Updater')
 conf.set_quoted('DOWNLOAD_BUSNAME', 'xyz.openbmc_project.Software.Download')
 conf.set_quoted('FILEPATH_IFACE', 'xyz.openbmc_project.Common.FilePath')
 conf.set_quoted('INVENTORY_PATH', '/xyz/openbmc_project/inventory/')
@@ -170,7 +171,6 @@ image_updater_sources = files(
     'activation.cpp',
     'images.cpp',
     'item_updater.cpp',
-    'item_updater_main.cpp',
     'serialize.cpp',
     'version.cpp',
     'utils.cpp',
@@ -250,7 +250,21 @@ executable(
 )
 
 executable(
-    'phosphor-image-updater',
+    'phosphor-bmc-image-updater',
+    'item_updater_main.cpp',
+    'item_updater_bmc.cpp',
+    'activation_bmc.cpp',
+    image_error_cpp,
+    image_error_hpp,
+    image_updater_sources,
+    dependencies: [deps, ssl],
+    install: true
+)
+
+executable(
+    'phosphor-host-image-updater',
+    'item_updater_host_main.cpp',
+    'item_updater_host.cpp',
     image_error_cpp,
     image_error_hpp,
     image_updater_sources,

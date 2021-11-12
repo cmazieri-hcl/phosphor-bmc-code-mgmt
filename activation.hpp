@@ -23,6 +23,7 @@ namespace software
 namespace updater
 {
 
+
 #ifdef WANT_SIGNATURE_VERIFY
 namespace fs = std::filesystem;
 #endif
@@ -39,6 +40,11 @@ using RedundancyPriorityInherit = sdbusplus::server::object::object<
     sdbusplus::xyz::openbmc_project::Software::server::RedundancyPriority>;
 using ActivationProgressInherit = sdbusplus::server::object::object<
     sdbusplus::xyz::openbmc_project::Software::server::ActivationProgress>;
+
+using ActivationStateValue =
+ sdbusplus::xyz::openbmc_project::Software::server::Activation::Activations;
+
+
 
 constexpr auto applyTimeImmediate =
     "xyz.openbmc_project.Software.ApplyTime.RequestedApplyTimes.Immediate";
@@ -186,8 +192,7 @@ class Activation : public ActivationInherit, public Flash
      */
     Activation(sdbusplus::bus::bus& bus, const std::string& path,
                ItemUpdater& parent, std::string& versionId,
-               sdbusplus::xyz::openbmc_project::Software::server::Activation::
-                   Activations activationStatus,
+               ActivationStateValue activationStatus,
                AssociationList& assocs) :
         ActivationInherit(bus, path.c_str(), true),
         bus(bus), path(path), parent(parent), versionId(versionId),
@@ -238,14 +243,6 @@ class Activation : public ActivationInherit, public Flash
      * value to Active.
      */
     void onFlashWriteSuccess();
-
-#ifdef HOST_BIOS_UPGRADE
-    /* @brief write to Host flash function */
-    void flashWriteHost();
-
-    /** @brief Function that acts on Bios upgrade service file state changes */
-    void onStateChangesBios(sdbusplus::message::message&);
-#endif
 
     /** @brief Overloaded function that acts on service file state changes */
     void onStateChanges(sdbusplus::message::message&) override;
@@ -350,6 +347,12 @@ class Activation : public ActivationInherit, public Flash
     void onVerifyFailed();
 #endif
 };
+
+using ActivationMap = std::map<std::string,
+                      std::unique_ptr<phosphor::software::updater::Activation>>;
+
+using MultiActivation = std::map<std::string, ActivationMap>;
+
 
 } // namespace updater
 } // namespace software

@@ -20,6 +20,10 @@ namespace software
 namespace updater
 {
 
+// When you see server:: you know we're referencing our base class
+namespace server = sdbusplus::xyz::openbmc_project::Software::server;
+namespace control = sdbusplus::xyz::openbmc_project::Control::server;
+
 using ItemUpdaterInherit = sdbusplus::server::object::object<
     sdbusplus::xyz::openbmc_project::Common::server::FactoryReset,
     sdbusplus::xyz::openbmc_project::Control::server::FieldMode,
@@ -59,14 +63,8 @@ class ItemUpdater : public ItemUpdaterInherit
                      std::bind(std::mem_fn(&ItemUpdater::createActivation),
                                this, std::placeholders::_1))
     {
-        setBMCInventoryPath();
-        processBMCImage();
-        restoreFieldModeStatus();
-#ifdef HOST_BIOS_UPGRADE
-        createBIOSObject();
-#endif
         emit_object_added();
-    };
+    }
 
     /** @brief Save priority value to persistent storage (flash and optionally
      *  a U-Boot environment variable)
@@ -85,12 +83,7 @@ class ItemUpdater : public ItemUpdaterInherit
      *                         are trying to free up the priority.
      *  @return None
      */
-    void freePriority(uint8_t value, const std::string& versionId);
-
-    /**
-     * @brief Create and populate the active BMC Version.
-     */
-    void processBMCImage();
+    virtual void freePriority(uint8_t value, const std::string& versionId) = 0;
 
     /**
      * @brief Erase specified entry D-Bus object
@@ -98,12 +91,12 @@ class ItemUpdater : public ItemUpdaterInherit
      *
      * @param[in] entryId - unique identifier of the entry
      */
-    void erase(std::string entryId);
+    virtual void erase(std::string entryId) = 0;
 
     /**
      * @brief Deletes all versions except for the current one
      */
-    void deleteAll();
+     void deleteAll() override;
 
     /** @brief Creates an active association to the
      *  newly active software image
@@ -118,30 +111,6 @@ class ItemUpdater : public ItemUpdaterInherit
      */
     void removeAssociations(const std::string& path);
 
-    /** @brief Determine if the given priority is the lowest
-     *
-     *  @param[in] value - The priority that needs to be checked.
-     *
-     *  @return boolean corresponding to whether the given
-     *      priority is lowest.
-     */
-    bool isLowestPriority(uint8_t value);
-
-    /**
-     * @brief Updates the U-Boot variables to point to the requested
-     *        versionId, so that the systems boots from this version on
-     *        the next reboot.
-     *
-     * @param[in] versionId - The version to point the system to boot from.
-     */
-    void updateUbootEnvVars(const std::string& versionId);
-
-    /**
-     * @brief Updates the uboot variables to point to BMC version with lowest
-     *        priority, so that the system boots from this version on the
-     *        next boot.
-     */
-    void resetUbootEnvVars();
 
     /** @brief Brings the total number of active BMC versions to
      *         ACTIVE_BMC_MAX_ALLOWED -1. This function is intended to be
@@ -152,7 +121,7 @@ class ItemUpdater : public ItemUpdaterInherit
      *
      * @param[in] caller - The Activation object that called this function.
      */
-    void freeSpace(Activation& caller);
+    virtual void freeSpace(Activation& caller) = 0;
 
     /** @brief Creates a updateable association to the
      *  "running" BMC software image
@@ -168,13 +137,16 @@ class ItemUpdater : public ItemUpdaterInherit
     /** @brief Vector of needed BMC images in the tarball*/
     std::vector<std::string> imageUpdateList;
 
-  private:
+  protected:
+    std::string freePriority(ActivationMap& activationContaier, uint8_t value,
+                             const std::string& versionId);
+
     /** @brief Callback function for Software.Version match.
      *  @details Creates an Activation D-Bus object.
      *
      * @param[in]  msg       - Data associated with subscribed signal
      */
-    void createActivation(sdbusplus::message::message& msg);
+    virtual void createActivation(sdbusplus::message::message& msg) = 0;
 
     /**
      * @brief Validates the presence of SquashFS image in the image dir.
@@ -188,28 +160,8 @@ class ItemUpdater : public ItemUpdaterInherit
      */
     ActivationStatus validateSquashFSImage(const std::string& filePath);
 
-    /** @brief BMC factory reset - marks the read-write partition for
-     * recreation upon reboot. */
-    void reset() override;
 
-    /**
-     * @brief Enables field mode, if value=true.
-     *
-     * @param[in]  value  - If true, enables field mode.
-     * @param[out] result - Returns the current state of field mode.
-     *
-     */
-    bool fieldModeEnabled(bool value) override;
 
-    /** @brief Sets the BMC inventory item path under
-     *  /xyz/openbmc_project/inventory/system/chassis/. */
-    void setBMCInventoryPath();
-
-    /** @brief The path to the BMC inventory item. */
-    std::string bmcInventoryPath;
-
-    /** @brief Restores field mode status on reboot. */
-    void restoreFieldModeStatus();
 
     /** @brief Creates a functional association to the
      *  "running" BMC software image
@@ -224,9 +176,6 @@ class ItemUpdater : public ItemUpdaterInherit
     /** @brief The helper of image updater. */
     Helper helper;
 
-    /** @brief Persistent map of Activation D-Bus objects and their
-     * version id */
-    std::map<std::string, std::unique_ptr<Activation>> activations;
 
     /** @brief sdbusplus signal match for Software.Version */
     sdbusplus::bus::match_t versionMatch;
@@ -241,10 +190,6 @@ class ItemUpdater : public ItemUpdaterInherit
      */
     void removeReadOnlyPartition(std::string versionId);
 
-    /** @brief Copies U-Boot from the currently booted BMC chip to the
-     *  alternate chip.
-     */
-    void mirrorUbootToAlt();
 
     /** @brief Check the required image files
      *
@@ -256,23 +201,6 @@ class ItemUpdater : public ItemUpdaterInherit
      */
     bool checkImage(const std::string& filePath,
                     const std::vector<std::string>& imageList);
-
-#ifdef HOST_BIOS_UPGRADE
-    /** @brief Create the BIOS object without knowing the version.
-     *
-     *  The object is created only to provide the DBus access so that an
-     *  external service could set the correct BIOS version.
-     *  On BIOS code update, the version is updated accordingly.
-     */
-    void createBIOSObject();
-
-    /** @brief Persistent Activation D-Bus object for BIOS */
-    std::unique_ptr<Activation> biosActivation;
-
-  public:
-    /** @brief Persistent Version D-Bus object for BIOS */
-    std::unique_ptr<VersionClass> biosVersion;
-#endif
 };
 
 } // namespace updater
