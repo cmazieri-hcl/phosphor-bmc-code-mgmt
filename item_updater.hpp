@@ -35,13 +35,44 @@ using VersionClass = phosphor::software::manager::Version;
 using AssociationList =
     std::vector<std::tuple<std::string, std::string, std::string>>;
 
+using VersionPurpose = server::Version::VersionPurpose;
+
+// used in ItemUpdater::createActivation(sdbusplus::message::message& msg)
+// implementation in item_updater_base.cpp
+struct SoftwareVersionMessage
+{
+    SoftwareVersionMessage(sdbusplus::message::message& msg);
+    SoftwareVersionMessage() = delete;
+    bool isPurposeBMC() const;
+    bool isPurposeHOST() const;
+    bool isPurposeSYSTEM() const;
+    bool isPurposeUnknown() const;
+    /** @brief returns true if
+     *         purpose != VersionPurpose::Unknown
+     *     and version   is not empty
+     *     and path      is not empty
+     *     and filePath  is not empty
+     *     and versionId is not empty
+     **/
+    bool isValid() const;
+    VersionPurpose  purpose = VersionPurpose::Unknown;
+    std::string version;
+    std::string extendedVersion;
+    std::string path;
+    std::string filePath;
+    std::string versionId;
+ private:
+    void readMessage(sdbusplus::message::message& msg);
+};
+
+
 /** @class ItemUpdater
  *  @brief Manages the activation of the BMC version items.
  */
 class ItemUpdater : public ItemUpdaterInherit
 {
   public:
-    /*
+    /**
      * @brief Types of Activation status for image validation.
      */
     enum class ActivationStatus

@@ -302,6 +302,7 @@ void ItemUpdaterBmc::processBMCImage()
     return;
 }
 
+
 bool ItemUpdaterBmc::fieldModeEnabled(bool value)
 {
     // enabling field mode is intended to be one way: false -> true
@@ -349,6 +350,7 @@ void ItemUpdaterBmc::restoreFieldModeStatus()
     }
 }
 
+
 void ItemUpdaterBmc::freePriority(uint8_t value, const std::string &versionId)
 {
     auto lowestVersion = ItemUpdater::freePriority(activations, value,
@@ -359,120 +361,47 @@ void ItemUpdaterBmc::freePriority(uint8_t value, const std::string &versionId)
 
 void ItemUpdaterBmc::createActivation(sdbusplus::message::message& msg)
 {
-
-    using SVersion = server::Version;
-    using VersionPurpose = SVersion::VersionPurpose;
-    using VersionClass = phosphor::software::manager::Version;
-
-    sdbusplus::message::object_path objPath;
-    auto purpose = VersionPurpose::Unknown;
-    std::string extendedVersion;
-    std::string version;
-    std::map<std::string, std::map<std::string, std::variant<std::string>>>
-        interfaces;
-    msg.read(objPath, interfaces);
-    std::string path(std::move(objPath));
-    std::string filePath;
-
-    for (const auto& intf : interfaces)
-    {
-        if (intf.first == VERSION_IFACE)
-        {
-            for (const auto& property : intf.second)
-            {
-                if (property.first == "Purpose")
-                {
-                    auto value = SVersion::convertVersionPurposeFromString(
-                        std::get<std::string>(property.second));
-                    if (value == VersionPurpose::BMC ||
-#ifdef HOST_BIOS_UPGRADE
-                        value == VersionPurpose::Host ||
-#endif
-                        value == VersionPurpose::System)
-                    {
-                        purpose = value;
-                    }
-                }
-                else if (property.first == "Version")
-                {
-                    version = std::get<std::string>(property.second);
-                }
-            }
-        }
-        else if (intf.first == FILEPATH_IFACE)
-        {
-            for (const auto& property : intf.second)
-            {
-                if (property.first == "Path")
-                {
-                    filePath = std::get<std::string>(property.second);
-                }
-            }
-        }
-        else if (intf.first == EXTENDED_VERSION_IFACE)
-        {
-            for (const auto& property : intf.second)
-            {
-                if (property.first == "ExtendedVersion")
-                {
-                    extendedVersion = std::get<std::string>(property.second);
-                }
-            }
-        }
-    }
-    if (version.empty() || filePath.empty() ||
-        purpose == VersionPurpose::Unknown)
+    SoftwareVersionMessage imgMsg(msg);
+    bool validPurpose = imgMsg.isPurposeBMC() || imgMsg.isPurposeSYSTEM();
+    if (imgMsg.isValid() == false || validPurpose  == false ||
+            activations.find(imgMsg.versionId) != activations.end())
     {
         return;
     }
 
-    // Version id is the last item in the path
-    auto pos = path.rfind("/");
-    if (pos == std::string::npos)
+    // Determine the Activation state by processing the given image dir.
+    auto activationState = server::Activation::Activations::Invalid;
+    ItemUpdater::ActivationStatus result =
+            ItemUpdater::validateSquashFSImage(imgMsg.filePath);
+
+    AssociationList associations = {};
+
+    if (result == ItemUpdater::ActivationStatus::ready)
     {
-        error("No version id found in object path: {PATH}", "PATH", path);
-        return;
+        activationState = server::Activation::Activations::Ready;
+        // Create an association to the BMC inventory item
+        associations.emplace_back(
+                 std::make_tuple(ACTIVATION_FWD_ASSOCIATION,
+                                 ACTIVATION_REV_ASSOCIATION, bmcInventoryPath));
     }
 
-    auto versionId = path.substr(pos + 1);
+    activations.insert(std::make_pair(
+                           imgMsg.versionId,
+                           std::make_unique<ActivationBmc>
+                           (bus, imgMsg.path, *this, imgMsg.versionId,
+                            activationState, associations)));
 
-    if (activations.find(versionId) == activations.end())
-    {
-        // Determine the Activation state by processing the given image dir.
-        auto activationState = server::Activation::Activations::Invalid;
-        ItemUpdater::ActivationStatus result;
-        if (purpose == VersionPurpose::BMC || purpose == VersionPurpose::System)
-            result = ItemUpdater::validateSquashFSImage(filePath);
-        else
-            result = ItemUpdater::ActivationStatus::ready;
+    auto versionPtr = std::make_unique<VersionClass>(
+                bus, imgMsg.path, imgMsg.version, imgMsg.purpose,
+                imgMsg.extendedVersion, imgMsg.filePath,
+                std::bind(&ItemUpdater::erase, this, std::placeholders::_1));
 
-        AssociationList associations = {};
-
-        if (result == ItemUpdater::ActivationStatus::ready)
-        {
-            activationState = server::Activation::Activations::Ready;
-            // Create an association to the BMC inventory item
-            associations.emplace_back(
-                std::make_tuple(ACTIVATION_FWD_ASSOCIATION,
-                                ACTIVATION_REV_ASSOCIATION, bmcInventoryPath));
-        }
-
-        activations.insert(std::make_pair(
-            versionId,
-            std::make_unique<ActivationBmc>(bus, path, *this, versionId,
-                                         activationState, associations)));
-
-        auto versionPtr = std::make_unique<VersionClass>(
-            bus, path, version, purpose, extendedVersion, filePath,
-            std::bind(&ItemUpdater::erase, this, std::placeholders::_1));
-        versionPtr->deleteObject =
-            std::make_unique<phosphor::software::manager::Delete>(bus, path,
+    versionPtr->deleteObject =
+            std::make_unique<phosphor::software::manager::Delete>(bus,
+                                                                  imgMsg.path,
                                                                   *versionPtr);
-        versions.insert(std::make_pair(versionId, std::move(versionPtr)));
-    }
-    return;
+    versions.insert(std::make_pair(imgMsg.versionId, std::move(versionPtr)));
 }
-
 
 
 void ItemUpdaterBmc::freeSpace(Activation& caller)
