@@ -251,9 +251,9 @@ executable(
 
 executable(
     'phosphor-bmc-image-updater',
-    'item_updater_main.cpp',
-    'item_updater_bmc.cpp',
-    'activation_bmc.cpp',
+    'bmc/item_updater_bmc_main.cpp',
+    'bmc/item_updater_bmc.cpp',
+    'bmc/activation_bmc.cpp',
     image_error_cpp,
     image_error_hpp,
     image_updater_sources,
@@ -263,8 +263,9 @@ executable(
 
 executable(
     'phosphor-host-image-updater',
-    'item_updater_host_main.cpp',
-    'item_updater_host.cpp',
+    'host/item_updater_host_main.cpp',
+    'host/item_updater_host.cpp',
+    'host/activation_host.cpp',
     image_error_cpp,
     image_error_hpp,
     image_updater_sources,

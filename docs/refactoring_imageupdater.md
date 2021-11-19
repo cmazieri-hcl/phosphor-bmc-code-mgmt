@@ -78,7 +78,7 @@ The *Activation* class becomes abstract and new classes *ActivationBmc* and
 ### Methods removed from *Activation* class
 
 1. The method deleteImageManagerObject() can be moved into *ItemUpdater* class.
-2. The method rebootBmc() is not used and can be removed.
+2. The method rebootBmc() can be moved to *ActivationBmc* class.
 
 
 ### Methods moved from *Activation* class to children classes
