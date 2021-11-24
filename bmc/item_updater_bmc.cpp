@@ -391,16 +391,7 @@ void ItemUpdaterBmc::createActivation(sdbusplus::message::message& msg)
                            (bus, imgMsg.path, *this, imgMsg.versionId,
                             activationState, associations)));
 
-    auto versionPtr = std::make_unique<VersionClass>(
-                bus, imgMsg.path, imgMsg.version, imgMsg.purpose,
-                imgMsg.extendedVersion, imgMsg.filePath,
-                std::bind(&ItemUpdater::erase, this, std::placeholders::_1));
-
-    versionPtr->deleteObject =
-            std::make_unique<phosphor::software::manager::Delete>(bus,
-                                                                  imgMsg.path,
-                                                                  *versionPtr);
-    versions.insert(std::make_pair(imgMsg.versionId, std::move(versionPtr)));
+   ItemUpdater::createVersion(imgMsg);
 }
 
 
