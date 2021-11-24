@@ -30,13 +30,12 @@ namespace updater
  * @class The HostImageType class aims to identify an 'Image Type'
  *        of the firmware being updated into a BMC controlled Host.
  *
- * Static methods:
- * @li  @sa availableTypes() the list of available types being handled by BMC
- * @li  @sa type(Type id) a string id for a such Type id
  *
- * By passing the image directory into the constructor, this class provides:
- *   @li The current type of an image directory @sa curType()
- *        and @sa curTypeString()
+ * By passing the 'image directory' and the 'array of possible image types'
+ *   into the constructor, this class provides:
+ *
+ *    @li The index type of an image directory @sa curType()
+ *    @li @sa curTypeString()
  *
  * For identifying an 'Image Type' the main methods are @sa guessTypeByName()
  *       and guessTypeByContent()
@@ -45,36 +44,17 @@ namespace updater
 class HostImageType
 {
 public:
-    enum Type
-    {
-        Unknown = -1
-#if defined(HOST_BIOS_UPGRADE)
-        , BIOS
-#endif
-#if defined(HOST_CPLD_UPGRADE)
-        , CPLD
-#endif
-#if defined(HOST_BIC_UPGRADE)
-        , BIC
-#endif
-#if defined(HOST_VR_UPGRADE)
-        , VR
-#endif
-#if defined(HOST_ME_UPGRADE)
-        , ME
-#endif
-    };
-    explicit HostImageType(const std::string &imageDirectory);
+    using  Type = int;
+    enum { Unknown = -1 };
+    explicit HostImageType(const std::string &imageDirectory,
+                           const std::vector<std::string>& types);
     HostImageType() = delete;
     virtual ~HostImageType();
  public:
-    static std::string  type(Type id);
-    static std::vector<std::string> availableTypes();
-    static std::vector<std::string> buildImageTypeArray();
- public:
-    std::string         curTypeString() const;
-    Type                curType() const;
-    std::string         imageFile() const;
+    std::string  type(Type id) const;
+    std::string  curTypeString() const;
+    Type         curType() const;
+    std::string  imageFile() const;
  private:
     enum FileContent
     {
@@ -109,7 +89,7 @@ public:
     bool      fileIsText(const std::string& filename)   const;
     HostImageType::FileContent fileContent(const std::string& filename) const;
  private:
-    static std::vector<std::string>  m_types;
+    std::vector<std::string>  m_types;
     Type                 m_imageTypeId;
     std::string          m_imageFile;   // binary image file
 };

@@ -337,13 +337,19 @@ if not build_tests.disabled()
         'version.cpp']
     )
 
+
+   host_include = include_directories('host')
+
     test('utest',
         executable(
             'utest',
             './test/utest.cpp',
+            './test/hostimagetypetest.cpp',
+            './host/hostimagetype.cpp',
             link_args: dynamic_linker,
             build_rpath: get_option('oe-sdk').enabled() ? rpath : '',
-            dependencies: [deps, gtest, include_srcs, ssl]
+            dependencies: [deps, gtest, include_srcs, ssl],
+            include_directories: host_include
         )
 )
 endif

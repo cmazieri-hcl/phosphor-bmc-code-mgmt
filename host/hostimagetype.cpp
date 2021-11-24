@@ -33,13 +33,17 @@ namespace software
 namespace updater
 {
 
-std::vector<std::string>  HostImageType::m_types =
-        HostImageType::buildImageTypeArray();
 
-
-HostImageType::HostImageType(const std::string &imageDirectory)
+HostImageType::HostImageType(const std::string &imageDirectory,
+                             const std::vector<std::string>& types)
     : m_imageTypeId(Unknown)
 {
+    for (const auto& imgType : types)
+    {
+        auto str = imgType;
+        boost::to_lower(str);
+        m_types.push_back(str);
+    }
     if (std::filesystem::is_directory(imageDirectory) == true)
     {
         std::vector<std::string> binary_files;
@@ -75,48 +79,17 @@ HostImageType::~HostImageType()
 }
 
 
-std::string HostImageType::type(Type id)
+std::string HostImageType::type(Type id) const
 {
     std::string ret;
-    if (id != Unknown)
+    decltype(m_types.size()) compareInteger = id;
+    if (id >= 0 && compareInteger < m_types.size())
     {
-        ret =  HostImageType::m_types.at(id);
+        ret =  m_types.at(id);
     }
     return ret;
 }
 
-
-std::vector<std::string> HostImageType::availableTypes()
-{
-    return HostImageType::m_types;
-}
-
-/**
- * @brief HostImageType::buildImageTypeArray()
- * These are the types handled so far, they must match with enumerator @sa Type
- * @return
- */
-std::vector<std::string>
-HostImageType::buildImageTypeArray()
-{
-    std::vector<std::string> array;
-#if defined(HOST_BIOS_UPGRADE)
-        array.push_back("bios");
-#endif
-#if defined(HOST_CPLD_UPGRADE)
-        array.push_back("cpld");
-#endif
-#if defined(HOST_BIC_UPGRADE)
-        array.push_back("bic");
-#endif
-#if defined(HOST_VR_UPGRADE)
-        array.push_back("vr");
-#endif
-#if defined(HOST_ME_UPGRADE)
-        array.push_back("me");
-#endif
-    return array;
-}
 
 std::string HostImageType::curTypeString() const
 {
@@ -151,7 +124,7 @@ bool HostImageType::guessTypeByName(const std::vector<std::string> &files)
             }
         }
         counter = 0;
-        for (const auto& img_type : HostImageType::m_types)
+        for (const auto& img_type : m_types)
         {
             auto type_lowercase_plus_space = img_type + ' ';
             /* convert file name to lowercase as the type names are in lowercase
@@ -176,7 +149,7 @@ bool HostImageType::guessTypeByName(const std::vector<std::string> &files)
 bool HostImageType::guessTypeByContent(const std::vector<std::string> &files)
 {
     size_t counterType = 0;
-    for (const auto& img_type : HostImageType::m_types)
+    for (const auto& img_type : m_types)
     {
         auto  upper_type = img_type;
         boost::to_upper(upper_type);
