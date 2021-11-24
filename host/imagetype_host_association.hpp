@@ -74,17 +74,19 @@ class ImagetypeHostsAssociation
         */
        bool                      isValid()  const;
 
-  private:
+  protected:
+       ImagetypeHostsAssociation(sdbusplus::bus::bus& bus);
+       void setData(const std::string& imgPath);
        EntityManagerDict getActiveHostsFromEntityManager();
-       void              readImageTypeFromManifestFile();
+       std::string       readImageTypeFromManifestFile();
        ImageTypeList     createImageTypeList(const EntityManagerDict &);
-       std::string       identifyImageType(const ImageTypeList&);
+       bool              identifyImageType(const ImageTypeList&);
        void              readTargethostsFromManifestFile(EntityManagerDict *);
        void              createHostsImageTypeAssociation(EntityManagerDict *,
                                                         std::string image_type);
   private:
        sdbusplus::bus::bus &     _bus;
-       const std::string         _imagePath;
+       std::string               _imagePath;
        std::string               _imageType;
        std::vector<std::string>  _host_obj_paths;
        HostImageTypeList         _image_type_list_per_host;

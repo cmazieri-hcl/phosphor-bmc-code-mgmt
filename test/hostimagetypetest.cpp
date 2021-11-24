@@ -17,6 +17,8 @@
 #include "config.h"
 
 #include "hostimagetype.hpp"
+
+
 #include <filesystem>
 #include <iostream>
 #include <fstream>
@@ -28,6 +30,36 @@
 
 
 using namespace phosphor::software::updater;
+
+#include "imagetype_host_association.hpp"
+
+/* just to use protected members  */
+class TestImagetypeHostsAssociation : public ImagetypeHostsAssociation
+{
+ public:
+    TestImagetypeHostsAssociation(sdbusplus::bus::bus& bus,
+                                  const std::string& imgPath)
+        : ImagetypeHostsAssociation(bus)
+    {
+        setData(imgPath);
+    }
+    EntityManagerDict getActiveHostsFromEntityManager()
+    {
+        return ImagetypeHostsAssociation::getActiveHostsFromEntityManager();
+    }
+    ImageTypeList createImageTypeList()
+    {
+        auto dict = getActiveHostsFromEntityManager();
+        return ImagetypeHostsAssociation::createImageTypeList(dict);
+    }
+    bool identifyImageType(const ImageTypeList & list)
+    {
+        return ImagetypeHostsAssociation::identifyImageType(list);
+    }
+};
+
+
+
 
 
 class HostImageTypeTest : public testing::Test
@@ -80,13 +112,15 @@ class HostImageTypeTest : public testing::Test
     std::string _me_dir;
     std::string _none_dir;
     std::vector<std::string> _image_types_array = {"BIOS", "cpld", "Me", "vr"};
+    sdbusplus::bus::bus  _bus = sdbusplus::bus::new_default();
 
  private:
     void createImageDirectories()
     {
-        _bios_dir = _directory + '/'+ "bios";
-        _cpld_dir  = _directory + '/'+ "cpld";
-        _me_dir   = _directory + '/'+ "me";
+        _bios_dir  = _directory + '/' + "bios";
+        _cpld_dir  = _directory + '/' + "cpld";
+        _me_dir    = _directory + '/' + "me";
+        _none_dir  = _directory + '/' + "none";
         mkdir(_bios_dir.c_str(), 0775);
         mkdir(_cpld_dir.c_str(), 0775);
         mkdir(_me_dir.c_str(), 0775);
@@ -299,3 +333,73 @@ TEST_F(HostImageTypeTest, TestMeImageByContent)
      const std::string image_name{"YMM05_FwOrch_1550736000.bin"};
      ASSERT_TRUE(me_image.imageFile().find(image_name) != std::string::npos);
 }
+
+
+TEST_F(HostImageTypeTest, TestHostsAssociation_getActiveHostsFromEntityManager)
+{
+    TestImagetypeHostsAssociation hostsAssoc(_bus, _cpld_dir);
+    auto entity_manager_dic = hostsAssoc.getActiveHostsFromEntityManager();
+
+    ASSERT_EQ(entity_manager_dic.empty(), false);
+}
+
+
+TEST_F(HostImageTypeTest, TestHostsAssociation_createImageTypeList)
+{
+    TestImagetypeHostsAssociation hostsAssoc(_bus, _cpld_dir);
+    auto global_image_list = hostsAssoc.createImageTypeList();
+
+    ASSERT_EQ(global_image_list.empty(), false);
+}
+
+
+TEST_F(HostImageTypeTest, TestHostsAssociation_identifyImageType_cpld)
+{
+    TestImagetypeHostsAssociation hostsAssoc(_bus, _cpld_dir);
+    auto global_image_list = hostsAssoc.createImageTypeList();
+
+    ASSERT_EQ(global_image_list.empty(), false);
+
+    auto ok = hostsAssoc.identifyImageType(global_image_list);
+    ASSERT_EQ(ok, true);
+
+    ASSERT_EQ(hostsAssoc.imageType(), "cpld");
+}
+
+
+TEST_F(HostImageTypeTest, TestHostsAssociation_identifyImageType_bios)
+{
+    TestImagetypeHostsAssociation hostsAssoc(_bus, _bios_dir);
+    auto global_image_list = hostsAssoc.createImageTypeList();
+
+    ASSERT_EQ(global_image_list.empty(), false);
+
+    auto ok = hostsAssoc.identifyImageType(global_image_list);
+    ASSERT_EQ(ok, true);
+
+    ASSERT_EQ(hostsAssoc.imageType(), "bios");
+}
+
+
+
+TEST_F(HostImageTypeTest, TestHostsAssociation_identifyImageType_Manifest_file)
+{
+    std::string manifest_file{_none_dir};
+    manifest_file += "/MANIFEST";
+    FILE *manifest_stream = fopen(manifest_file.c_str(), "a+");
+    ASSERT_NE(manifest_stream, nullptr);
+    auto written = fprintf(manifest_stream, "\nImageType=Vr\n");
+    fclose(manifest_stream);
+    ASSERT_NE(written, 0);
+
+    TestImagetypeHostsAssociation hostsAssoc(_bus, _none_dir);
+    auto global_image_list = hostsAssoc.createImageTypeList();
+
+    ASSERT_EQ(global_image_list.empty(), false);
+
+    auto ok = hostsAssoc.identifyImageType(global_image_list);
+    ASSERT_EQ(ok, true);
+
+    ASSERT_EQ(hostsAssoc.imageType(), "vr");
+}
+

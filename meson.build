@@ -262,16 +262,22 @@ executable(
     install: true
 )
 
+
+host_common_sources = files(
+   'host/imagetype_host_association.cpp',
+   'host/hostimagetype.cpp',
+   'host/ipmiutils.cpp',
+   'host/ipmidbusutils.cpp',
+   'host/qemuanswer.cpp',
+)
+
+
 executable(
     'phosphor-host-image-updater',
+     host_common_sources,
     'host/item_updater_host_main.cpp',
     'host/item_updater_host.cpp',
     'host/activation_host.cpp',
-    'host/imagetype_host_association.cpp',
-    'host/hostimagetype.cpp',
-    'host/ipmiutils.cpp',
-    'host/ipmidbusutils.cpp',
-    'host/qemuanswer.cpp',
     image_error_cpp,
     image_error_hpp,
     image_updater_sources,
@@ -345,7 +351,7 @@ if not build_tests.disabled()
             'utest',
             './test/utest.cpp',
             './test/hostimagetypetest.cpp',
-            './host/hostimagetype.cpp',
+            host_common_sources,
             link_args: dynamic_linker,
             build_rpath: get_option('oe-sdk').enabled() ? rpath : '',
             dependencies: [deps, gtest, include_srcs, ssl],
