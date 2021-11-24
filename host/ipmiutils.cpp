@@ -127,6 +127,29 @@ ObjectDataSearchable::searchObject(const std::string &propSearch,
 }
 
 
+std::vector<std::string>
+ObjectDataSearchable::searchObjectContains(const std::string &propSearch,
+                                           const std::string &valueSearch) const
+{
+     std::vector<DbusObjectPath> objectPath;
+     for (auto & obj : this->objectData)
+     {
+         for (auto & propMap : obj.second)
+         {
+             const std::string& propertyName  = propMap.first;
+             const std::string& propertyValue = propMap.second;
+             if (boost::algorithm::iequals(propertyName, propSearch)
+                     && boost::icontains(propertyValue, valueSearch)
+                     && vectorContainsString(objectPath, obj.first) == false)
+             {
+                 objectPath.push_back(obj.first);
+             }
+         }
+     }
+     return objectPath;
+}
+
+
 std::string
 ObjectDataSearchable::getValue(const DbusObjectPath &object,
                                const std::string &property) const

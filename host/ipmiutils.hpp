@@ -29,8 +29,14 @@ namespace util
 
 struct ObjectDataSearchable
 {
+    /* value must match, property not */
     std::vector<std::string> searchObject(const std::string& propSearch,
                                           const std::string& valueSearch) const;
+
+    /* property must match value can contains */
+    std::vector<std::string> searchObjectContains(const std::string& propSearch,
+                                          const std::string& valueSearch) const;
+
     std::string getValue(const ipmi::DbusObjectPath& object,
                          const std::string& property) const;
 
