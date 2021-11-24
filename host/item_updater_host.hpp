@@ -9,7 +9,6 @@ namespace software
 namespace updater
 {
 
-
 class ItemUpdaterHost : public ItemUpdater
 {
  public:
@@ -20,10 +19,12 @@ class ItemUpdaterHost : public ItemUpdater
     void freeSpace(Activation& caller) override;
     void freePriority(uint8_t value, const std::string& versionId) override;
 
-private: // reimplementations from parent class
-    void reset() override;
+ private: // reimplementations from parent class
     void createActivation(sdbusplus::message::message& msg) override;
 
+ private:
+
+ private:
     /** @brief Persistent map of Activation D-Bus objects and their
      * version id */
      MultiActivation multiActivations;
