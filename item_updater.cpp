@@ -58,6 +58,13 @@ ItemUpdater::ActivationStatus
     return ItemUpdater::ActivationStatus::ready;
 }
 
+
+void ItemUpdater::reset()
+{
+    // Empty
+}
+
+
 void ItemUpdater::savePriority(const std::string& versionId, uint8_t value)
 {
     storePriority(versionId, value);
@@ -149,6 +156,21 @@ void ItemUpdater::createUpdateableAssociation(const std::string& path)
     assocs.emplace_back(std::make_tuple(UPDATEABLE_FWD_ASSOCIATION,
                                         UPDATEABLE_REV_ASSOCIATION, path));
     associations(assocs);
+}
+
+
+void ItemUpdater::createVersion(const SoftwareVersionMessage& versionInfo)
+{
+    auto versionPtr = std::make_unique<VersionClass>(
+                bus, versionInfo.path, versionInfo.version, versionInfo.purpose,
+                versionInfo.extendedVersion, versionInfo.filePath,
+                std::bind(&ItemUpdater::erase, this, std::placeholders::_1));
+
+    versionPtr->deleteObject =
+            std::make_unique<phosphor::software::manager::Delete>
+                   (bus, versionInfo.path, *versionPtr);
+    versions.insert(std::make_pair(versionInfo.versionId,
+                                   std::move(versionPtr)));
 }
 
 

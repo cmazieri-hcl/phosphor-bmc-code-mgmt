@@ -97,6 +97,8 @@ class ItemUpdater : public ItemUpdaterInherit
         emit_object_added();
     }
 
+    void reset() override;
+
     /** @brief Save priority value to persistent storage (flash and optionally
      *  a U-Boot environment variable)
      *
@@ -169,6 +171,8 @@ class ItemUpdater : public ItemUpdaterInherit
     std::vector<std::string> imageUpdateList;
 
   protected:
+    void  createVersion(const SoftwareVersionMessage& versionInfo);
+
     std::string freePriority(ActivationMap& activationContaier, uint8_t value,
                              const std::string& versionId);
 
@@ -190,9 +194,6 @@ class ItemUpdater : public ItemUpdaterInherit
      *
      */
     ActivationStatus validateSquashFSImage(const std::string& filePath);
-
-
-
 
     /** @brief Creates a functional association to the
      *  "running" BMC software image
