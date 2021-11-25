@@ -65,10 +65,15 @@ HostImageType::HostImageType(const std::string &imageDirectory,
         }
         // from binary files guess the image file (greater file in size)
         gessImageName(binary_files);
+
         // guess image type, for name try binary files first
-        guessTypeByName(binary_files)
-                || guessTypeByName(text_files)
-                || guessTypeByContent(text_files);
+        auto ok = guessTypeByName(binary_files)
+                   || guessTypeByName(text_files)
+                   || guessTypeByContent(text_files);
+        if (ok == false)
+        {
+            m_imageFile.clear();
+        }
     }
 }
 
