@@ -37,6 +37,7 @@ readXml(std::istream& is,
     // traverse pt
     std::vector<std::string> children;
     const ptree & formats =  pt.get_child("node");
+    bool match_interface = false;
     BOOST_FOREACH(ptree::value_type const& f, formats)
     {
         if (f.first == "node")
@@ -53,9 +54,14 @@ readXml(std::istream& is,
            if (interfaceMatch.empty() == true
                    || interface.find(interfaceMatch) != std::string::npos)
            {
-               ifs->push_back(interface);
+               match_interface = true;
            }
+           ifs->push_back(interface);
         }
+    }
+    if (ifs != nullptr && ifs->empty() == false && match_interface == false)
+    {
+        ifs->erase(ifs->begin(), ifs->end());
     }
     return children;
 }
@@ -189,16 +195,19 @@ void Dbus::objectTreeValues(const std::string &service,
       //  printf("%s\n", xml.c_str());
         std::vector<std::string> interfaceList;
         auto children = readXml(xml_stream, interfaceMatch, &interfaceList);
+        PropertyStringMap stringValues;
         for (const auto & intf_name : interfaceList)
         {
             auto propertiesValues = getProperties(service, path, intf_name);
             if (propertiesValues.empty() == false)
             {
-                PropertyStringMap stringValues;
                 copyPropertyMapToPropertyStringMap(propertiesValues,
                                                    &stringValues);
-                (*tree)[path] = stringValues;
             }
+        }
+        if (stringValues.empty() == false)
+        {
+            (*tree)[path] = stringValues;
         }
         for (auto const& child:  children)
         {
