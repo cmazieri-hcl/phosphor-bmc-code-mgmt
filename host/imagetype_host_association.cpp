@@ -58,6 +58,9 @@ ImagetypeHostsAssociation::ImagetypeHostsAssociation(sdbusplus::bus::bus &bus,
             lg2::error("Image type detected does is not allowed");
             return;
         }
+
+        // remove hosts that do NOT accept the detected ImageType
+        removeHostsImageTypeNotIn(&entiManagerDict);
     }
 }
 
@@ -238,6 +241,30 @@ bool ImagetypeHostsAssociation::identifyImageType(const ImageTypeList & list)
         this->_imageType =  image_identifier.curTypeString();
     }
     return this->_imageType.empty() == false;
+}
+
+
+void
+ImagetypeHostsAssociation::removeHostsImageTypeNotIn(EntityManagerDict *dict)
+{
+    for (auto it = _image_type_list_per_host.rbegin();
+           it != _image_type_list_per_host.rend(); )
+    {
+        // if that host does not support the current image type, remove it
+        // to not allow flashing on it
+        if (it->second.find(_imageType) == it->second.end())
+        {
+            if (dict != nullptr)
+            {
+                dict->objectData.erase(it->first);
+            }
+            _image_type_list_per_host.erase(it->first);
+        }
+        else
+        {
+            ++it;
+        }
+    }
 }
 
 

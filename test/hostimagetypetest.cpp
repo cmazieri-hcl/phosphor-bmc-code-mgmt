@@ -52,9 +52,17 @@ class TestImagetypeHostsAssociation : public ImagetypeHostsAssociation
         auto dict = getActiveHostsFromEntityManager();
         return ImagetypeHostsAssociation::createImageTypeList(dict);
     }
+    ImageTypeList createImageTypeList(EntityManagerDict& dict)
+    {
+         return ImagetypeHostsAssociation::createImageTypeList(dict);
+    }
     bool identifyImageType(const ImageTypeList & list)
     {
         return ImagetypeHostsAssociation::identifyImageType(list);
+    }
+    void removeHostsImageTypeNotIn(EntityManagerDict *dit)
+    {
+        return ImagetypeHostsAssociation::removeHostsImageTypeNotIn(dit);
     }
 };
 
@@ -401,5 +409,32 @@ TEST_F(HostImageTypeTest, TestHostsAssociation_identifyImageType_Manifest_file)
     ASSERT_EQ(ok, true);
 
     ASSERT_EQ(hostsAssoc.imageType(), "vr");
+}
+
+
+TEST_F(HostImageTypeTest, TestHostsAssociation_removeHostsImageTypeNotIn)
+{
+    TestImagetypeHostsAssociation hostsAssoc(_bus, _cpld_dir);
+    auto entity_manager_dic = hostsAssoc.getActiveHostsFromEntityManager();
+    ASSERT_EQ(entity_manager_dic.empty(), false);
+
+    auto global_image_list = hostsAssoc.createImageTypeList();
+    ASSERT_EQ(global_image_list.empty(), false);
+
+    std::string manifest_file{_cpld_dir};
+    manifest_file += "/MANIFEST";
+    FILE *manifest_stream = fopen(manifest_file.c_str(), "a+");
+    ASSERT_NE(manifest_stream, nullptr);
+    auto written = fprintf(manifest_stream, "\nImageType=Vr\n");
+    fclose(manifest_stream);
+    ASSERT_NE(written, 0);
+
+    auto ok = hostsAssoc.identifyImageType(global_image_list);
+    ASSERT_EQ(ok, true);
+    ASSERT_EQ(hostsAssoc.imageType(), "vr");
+
+    ASSERT_FALSE(entity_manager_dic.empty());
+    hostsAssoc.removeHostsImageTypeNotIn(&entity_manager_dic);
+    ASSERT_TRUE(entity_manager_dic.empty());
 }
 

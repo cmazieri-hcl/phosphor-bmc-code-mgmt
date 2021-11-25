@@ -82,6 +82,7 @@ class ImagetypeHostsAssociation
        ImageTypeList     createImageTypeList(const EntityManagerDict &);
        bool              identifyImageType(const ImageTypeList&);
        void              readTargethostsFromManifestFile(EntityManagerDict *);
+       void              removeHostsImageTypeNotIn(EntityManagerDict *dit);
        void              createHostsImageTypeAssociation(EntityManagerDict *,
                                                         std::string image_type);
   private:
