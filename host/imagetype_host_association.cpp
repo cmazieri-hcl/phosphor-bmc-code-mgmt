@@ -3,7 +3,7 @@
 
 #include "imagetype_host_association.hpp"
 #include "hostimagetype.hpp"
-
+#include "utils.hpp"
 #include <phosphor-logging/lg2.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -61,6 +61,23 @@ ImagetypeHostsAssociation::ImagetypeHostsAssociation(sdbusplus::bus::bus &bus,
 
         // remove hosts that do NOT accept the detected ImageType
         removeHostsImageTypeNotIn(&entiManagerDict);
+
+        if (entiManagerDict.empty() == false)
+        {
+            if (utils::isMultiHostMachine() == true)
+            {
+                //TODO: at this point ADDRESS/BUS are necessary
+
+                // one more filter is possible to remove/ignore hosts if
+                // TargetHosts is present in the MANIFEST file
+                readTargethostsInManifest(&entiManagerDict);
+                associateHostsById(&entiManagerDict);
+            }
+            else
+            {
+                _host_obj_paths.push_back(_imageType);
+            }
+        }
     }
 }
 
@@ -73,7 +90,7 @@ bool ImagetypeHostsAssociation::isValid() const
 
 
 std::vector<std::string>
-ImagetypeHostsAssociation::associatedHostObjectsPath() const
+ImagetypeHostsAssociation::associatedHostsIds() const
 {
     return _host_obj_paths;
 }
@@ -180,7 +197,10 @@ std::string ImagetypeHostsAssociation::readImageTypeFromManifestFile()
  * @brief ImagetypeHostsAssociation::createImageTypeList
  * @param dict
  *
- *  Builds the _image_type_list_per_host for each host
+ *  Builds the _image_type_list_per_host for each host.
+ *  Each object in EntityManagerDict  must contain the property
+ *    "Names" which value starts with "IMAGETYPE=" and ends with the image type
+ *    string.
  *
  * @return a global ImageTypeList for all hosts found
  */
@@ -245,6 +265,33 @@ bool ImagetypeHostsAssociation::identifyImageType(const ImageTypeList & list)
 
 
 void
+ImagetypeHostsAssociation::readTargethostsInManifest(EntityManagerDict *dict)
+{
+   (void) dict;
+    //TODO:  implement here
+}
+
+
+//------------------------------------------------------
+/**
+ * @brief ImagetypeHostsAssociation::removeHostsImageTypeNotIn
+ *
+ *     Applies like a filter removing hosts that not accept the detected image
+ *        type in this->_imageType
+ *
+ *     The removal is performed in:
+ *       1. dict
+ *       2. this->_image_type_list_per_host
+ *
+ *  After this call if both "dict" and this->_image_type_list_per_host are
+ *    empty it means that the association between and 'image type' did not
+ *    happen.
+ *
+ * @param dict current Entiry Manager list of hosts that has Decorator with
+ *         "IMAGETYPE="
+ */
+//------------------------------------------------------
+void
 ImagetypeHostsAssociation::removeHostsImageTypeNotIn(EntityManagerDict *dict)
 {
     for (auto it = _image_type_list_per_host.rbegin();
@@ -265,6 +312,13 @@ ImagetypeHostsAssociation::removeHostsImageTypeNotIn(EntityManagerDict *dict)
             ++it;
         }
     }
+}
+
+
+void
+ImagetypeHostsAssociation::associateHostsById(EntityManagerDict *dict)
+{
+   (void) dict;
 }
 
 

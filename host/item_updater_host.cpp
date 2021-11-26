@@ -55,15 +55,15 @@ void ItemUpdaterHost::createActivation(sdbusplus::message::message &msg)
     }
 
     ImagetypeHostsAssociation hostsAssociation(bus, imgMsg.path);
-    auto  active_hosts =  hostsAssociation.associatedHostObjectsPath();
+    auto  hosts_assoc_imgType =  hostsAssociation.associatedHostsIds();
 
     // finally creates Activation for hosts in the list
-    if (hostsAssociation.isValid() && active_hosts.empty() == false)
+    if (hostsAssociation.isValid() && hosts_assoc_imgType.empty() == false)
     {
         ItemUpdater::createVersion(imgMsg);
         auto activationState = server::Activation::Activations::Ready;
         AssociationList associations = {};
-        for (const auto& host : active_hosts)
+        for (const auto& host : hosts_assoc_imgType)
         {
             (void) host;
             (void) activationState;

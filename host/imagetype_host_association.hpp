@@ -54,13 +54,25 @@ class ImagetypeHostsAssociation
 
        ImagetypeHostsAssociation(sdbusplus::bus::bus& bus,
                                  const std::string& imgPath);
-
        /**
-        * @brief associatedHostObjectsPath()
+        * @brief associatedHostsIds()
         *
-        * @return a list of associated Host Objects Path
+        * @return a list of associated Hosts that will be used to build
+        *         the hosts object paths
+        *
+        *   Single-host machines: will just return the image type such as cpld.
+        *   Multi-hosts machines will return a list of associated hosts ids,
+        *     example:
+        *          cpld_1
+        *          cpld_3
+        *      Considering a total of four hosts, in the example above
+        *      both hosts 2 and 4 are not present, possible reasons are:
+        *       1. They are not active
+        *       2. They not accept the 'cpld' image type
+        *       3. The TargetHosts is defined in MANIFEST file as:
+        *          TargetHosts=1,3
         */
-       std::vector<std::string>  associatedHostObjectsPath() const;
+       std::vector<std::string>  associatedHostsIds() const;
 
        /**
         * @brief imageType()
@@ -81,10 +93,10 @@ class ImagetypeHostsAssociation
        std::string       readImageTypeFromManifestFile();
        ImageTypeList     createImageTypeList(const EntityManagerDict &);
        bool              identifyImageType(const ImageTypeList&);
-       void              readTargethostsFromManifestFile(EntityManagerDict *);
+       void              readTargethostsInManifest(EntityManagerDict *dict);
        void              removeHostsImageTypeNotIn(EntityManagerDict *dit);
-       void              createHostsImageTypeAssociation(EntityManagerDict *,
-                                                        std::string image_type);
+       void              associateHostsById(EntityManagerDict *dict);
+
   private:
        sdbusplus::bus::bus &     _bus;
        std::string               _imagePath;
