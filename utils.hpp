@@ -69,4 +69,26 @@ int execute(const char* path, Arg&&... args)
     return internal::executeCmd(path, argArray.data());
 }
 
+/**
+ * @brief
+ * @return true if the build was configured for multi hosts machines
+ *
+ * There should be a compiler directive OBMC_HOST_INSTANCES where
+ *
+ * OBMC_HOST_INSTANCES="0"  ->   single host machines
+ *
+ * OBMC_HOST_INSTANCES="1 2 A"  multi hosts machines with Host Ids 1, 2 and A
+ */
+bool isMultiHostMachine();
+
+/**
+ * @brief for multi hosts machines having:
+ *     OBMC_HOST_INSTANCES="1 2 A"  or
+ *     OBMC_HOST_INSTANCES="1,2,A"
+ *
+ *
+ * @return an array with elements of  OBMC_HOST_INSTANCES
+ */
+std::vector<std::string> getMultiHostIds();
+
 } // namespace utils

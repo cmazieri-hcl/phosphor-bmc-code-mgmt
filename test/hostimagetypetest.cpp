@@ -17,7 +17,7 @@
 #include "config.h"
 
 #include "hostimagetype.hpp"
-
+#include "utils.hpp"
 
 #include <filesystem>
 #include <iostream>
@@ -438,3 +438,16 @@ TEST_F(HostImageTypeTest, TestHostsAssociation_removeHostsImageTypeNotIn)
     ASSERT_TRUE(entity_manager_dic.empty());
 }
 
+
+TEST_F(HostImageTypeTest, Utils_getMultiHostIds)
+{
+   std::vector<std::string> host_ids = utils::getMultiHostIds();
+   if (utils::isMultiHostMachine() == true)
+   {
+       ASSERT_FALSE(host_ids.empty());
+   }
+   else
+   {
+       ASSERT_TRUE(host_ids.empty());
+   }
+}

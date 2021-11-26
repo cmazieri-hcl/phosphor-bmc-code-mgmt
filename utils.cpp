@@ -1,8 +1,8 @@
 #include "utils.hpp"
 
-#include <unistd.h>
-
 #include <phosphor-logging/lg2.hpp>
+#include <boost/algorithm/string.hpp>
+#include <unistd.h>
 
 namespace utils
 {
@@ -120,6 +120,48 @@ int executeCmd(const char* path, char** args)
     return 0;
 }
 
-} // namespace internal
+}
+
+bool isMultiHostMachine()
+{
+    bool multihost = false;  // single host is the default
+#if defined(OBMC_HOST_INSTANCES)
+    // multi hosts list can be separated by spaces or commas
+    if (::strcmp("0", OBMC_HOST_INSTANCES) != 0
+            && (   ::strchr(OBMC_HOST_INSTANCES, ' ') != nullptr
+                || ::strchr(OBMC_HOST_INSTANCES, ',') != nullptr))
+    {
+        multihost = true;
+    }
+#endif
+    return multihost;
+}
+
+std::vector<std::string> getMultiHostIds()
+{
+    std::vector<std::string>  ids;
+#if defined(OBMC_HOST_INSTANCES)
+    if (isMultiHostMachine() == true)
+    {
+        std::string host_instances{OBMC_HOST_INSTANCES};
+        char delimiter[] = ",";
+        if  (host_instances.find(delimiter[0]) == std::string::npos)
+        {
+            delimiter[0] = ' ';
+        }
+        boost::algorithm::split(ids, host_instances,
+                                 boost::is_any_of(delimiter));
+        for (auto& id : ids)
+        {
+                boost::algorithm::trim(id);  // remove any extra space
+        }
+    }
+#endif
+    return ids;
+}
+
+
+
+// namespace internal
 
 } // namespace utils

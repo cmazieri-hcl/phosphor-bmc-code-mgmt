@@ -98,6 +98,11 @@ if get_option('host-bios-upgrade').enabled()
     conf.set_quoted('BIOS_OBJPATH', get_option('bios-object-path'))
 endif
 
+## Machine layer must set a meson option such as
+## -Dobmc_host_instances="${OBMC_HOST_INSTANCES}"
+conf.set_quoted('OBMC_HOST_INSTANCES', get_option('obmc_host_instances'))
+
+
 configure_file(output: 'config.h', configuration: conf)
 
 sdbusplus_dep = dependency('sdbusplus', required: false)
