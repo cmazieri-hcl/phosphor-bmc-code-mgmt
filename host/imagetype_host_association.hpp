@@ -81,7 +81,7 @@ class ImagetypeHostsAssociation
        std::string               imageType() const;
 
        /**
-        * @brief isValid
+        * @brief isValid()
         * @return true if there is 'image type' and at least a host associated
         */
        bool                      isValid()  const;

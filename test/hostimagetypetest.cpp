@@ -16,7 +16,8 @@
 
 #include "config.h"
 
-#include "hostimagetype.hpp"
+#include "hostimagetype.hpp"               // class HostImageType
+#include "imagetype_host_association.hpp"  // class ImagetypeHostsAssociation
 #include "utils.hpp"
 
 #include <filesystem>
@@ -31,45 +32,19 @@
 
 using namespace phosphor::software::updater;
 
-#include "imagetype_host_association.hpp"
-
-/* just to use protected members  */
-class TestImagetypeHostsAssociation : public ImagetypeHostsAssociation
-{
- public:
-    TestImagetypeHostsAssociation(sdbusplus::bus::bus& bus,
-                                  const std::string& imgPath)
-        : ImagetypeHostsAssociation(bus)
-    {
-        setData(imgPath);
-    }
-    EntityManagerDict getActiveHostsFromEntityManager()
-    {
-        return ImagetypeHostsAssociation::getActiveHostsFromEntityManager();
-    }
-    ImageTypeList createImageTypeList()
-    {
-        auto dict = getActiveHostsFromEntityManager();
-        return ImagetypeHostsAssociation::createImageTypeList(dict);
-    }
-    ImageTypeList createImageTypeList(EntityManagerDict& dict)
-    {
-         return ImagetypeHostsAssociation::createImageTypeList(dict);
-    }
-    bool identifyImageType(const ImageTypeList & list)
-    {
-        return ImagetypeHostsAssociation::identifyImageType(list);
-    }
-    void removeHostsImageTypeNotIn(EntityManagerDict *dit)
-    {
-        return ImagetypeHostsAssociation::removeHostsImageTypeNotIn(dit);
-    }
-};
-
-
-
-
-
+/**
+ * @brief The HostImageTypeTest class is used to test both classes HostImageType
+ *        and ImagetypeHostsAssociation.
+ *
+ *        It creates directories which files simulate images that will be used
+ *        software update.
+ *
+ *        The SetUp() creates four directories of images that will be used in
+ *        tests, after running all tests, the TearDown() will remove all created
+ *        directories.
+ *        The methods createTextFile() and createBinaryFile() are the low level
+ *        ones for file creation.
+ */
 class HostImageTypeTest : public testing::Test
 {
   protected:
@@ -273,6 +248,20 @@ class HostImageTypeTest : public testing::Test
     }
 };
 
+
+/****** tests for the class HostImageType begins here *******/
+/* The parameters for this class are:
+ * - The directory path that contains the image such as /tmp/images/id
+ * - The array of possible image types, the class will guess
+ *    the 'type' of the image if it is present in that array.
+ */
+
+
+/**
+ * @brief The class receives a directory image that DOES not contain
+ *         a valid image, so it does not identify the 'image file'
+ *         nor the 'image type'
+ */
 TEST_F(HostImageTypeTest, TestDirectoryDoesContainImage)
 {
     HostImageType imagedir(_directory, _image_types_array);
@@ -282,6 +271,10 @@ TEST_F(HostImageTypeTest, TestDirectoryDoesContainImage)
 }
 
 
+/**
+ * @brief The class receives a directory image that DOES not exist,
+ *         so it does not identify the 'image file' nor the 'image type'
+ */
 TEST_F(HostImageTypeTest, TestDirectoryDoesNotExist)
 {
     HostImageType imagedir("_this_directory_MUST_not_exist_zzzzzzzzzz00000000",
@@ -291,6 +284,13 @@ TEST_F(HostImageTypeTest, TestDirectoryDoesNotExist)
     ASSERT_EQ(imagedir.curTypeString().size(), 0);
 }
 
+
+/**
+ * @brief  The class receives a directory image that is valid, but the
+ *   '_image_types_array' does not bring a valid string that could identify
+ *   the image neither by files name nor by files content,
+ *   so it does not identify the 'image file' nor the 'image type'
+ */
 TEST_F(HostImageTypeTest, TestUnknownImage)
 {
     HostImageType imagedirNone(_none_dir, _image_types_array);
@@ -299,6 +299,14 @@ TEST_F(HostImageTypeTest, TestUnknownImage)
     ASSERT_EQ(imagedirNone.curTypeString().size(), 0);
 }
 
+
+/**
+ * @brief In this test the class receives a valid 'bios' image
+ *        so it is expected that HostImageType recognizes the 'bios' as
+ *        the current image type.
+ *
+ *        The HostImageType::guessTypeByName() is supposed to be used here
+ */
 TEST_F(HostImageTypeTest, TestBiosImageByName)
 {
     HostImageType bios_image(_bios_dir, _image_types_array);
@@ -306,6 +314,14 @@ TEST_F(HostImageTypeTest, TestBiosImageByName)
     ASSERT_NE(bios_image.imageFile().find("bios.bin"), std::string::npos);
 }
 
+
+/**
+ * @brief In this test the class receives a valid 'cpld' image
+ *        so it is expected that HostImageType recognizes the 'cpld' as
+ *        the current image type
+ *
+ *        The HostImageType::guessTypeByName() is supposed to be used here
+ */
 TEST_F(HostImageTypeTest, TestCpldImageByName)
 {
     HostImageType cpld_image(_cpld_dir, _image_types_array);
@@ -316,6 +332,14 @@ TEST_F(HostImageTypeTest, TestCpldImageByName)
 }
 
 
+/**
+ *  This test also uses the 'cpld' which content drives the class to identify
+ *  the 'image type' by looking at file names.
+ *
+ *  However the file which contains the string "CPLD" in the name is renamed
+ *  to  make sure HostImageType::guessTypeByContent() is used to identify the
+ *  image type
+ */
 TEST_F(HostImageTypeTest, TestCpldImageByContent)
 {
     const std::string cpld_release_notes    = _cpld_dir
@@ -334,6 +358,12 @@ TEST_F(HostImageTypeTest, TestCpldImageByContent)
 }
 
 
+/**
+ * @brief The files created for the "me" image do not allow the class
+ *        HostImageType identify the image by file names, then the
+ *        HostImageType::guessTypeByContent() is supposed to identify the
+ *        image type as  'me'
+ */
 TEST_F(HostImageTypeTest, TestMeImageByContent)
 {
      HostImageType me_image(_me_dir, _image_types_array);
@@ -343,6 +373,63 @@ TEST_F(HostImageTypeTest, TestMeImageByContent)
 }
 
 
+/****** tests for the class ImagetypeHostsAssociation begins here *******/
+/* These tests use the same directory images created by HostImageTypeTest
+    For these tests are mandatory:
+
+    Entity Manager defines the Image Types 'bios' and 'cpld'
+     and does not define 'vr'
+
+   Some tests force the 'vr' image by creating a specific record in the MANIFEST
+     file, it is just a way of creating the scenario for the test.
+*/
+
+/** TestImagetypeHostsAssociation class just uses protected members
+ *   from ImagetypeHostsAssociation class
+ */
+class TestImagetypeHostsAssociation : public ImagetypeHostsAssociation
+{
+ public:
+    TestImagetypeHostsAssociation(sdbusplus::bus::bus& bus,
+                                  const std::string& imgPath)
+        : ImagetypeHostsAssociation(bus)
+    {
+        setData(imgPath);
+    }
+    EntityManagerDict getActiveHostsFromEntityManager()
+    {
+        return ImagetypeHostsAssociation::getActiveHostsFromEntityManager();
+    }
+    ImageTypeList createImageTypeList()
+    {
+        auto dict = getActiveHostsFromEntityManager();
+        return ImagetypeHostsAssociation::createImageTypeList(dict);
+    }
+    ImageTypeList createImageTypeList(EntityManagerDict& dict)
+    {
+         return ImagetypeHostsAssociation::createImageTypeList(dict);
+    }
+    bool identifyImageType(const ImageTypeList & list)
+    {
+        return ImagetypeHostsAssociation::identifyImageType(list);
+    }
+    void removeHostsImageTypeNotIn(EntityManagerDict *dit)
+    {
+        return ImagetypeHostsAssociation::removeHostsImageTypeNotIn(dit);
+    }
+};
+
+
+/**
+ * Tests the method ImagetypeHostsAssociation::getActiveHostsFromEntityManager()
+ *
+ * For this it is mandatory that Entity Manager has an object with the
+ * interface  xyz.openbmc_project.Inventory.Decorator.Compatible
+ * and on its property 'Names' a value like 'IMAGETYPE=' to identify
+ * the set of image types current hosts accept.
+ *
+ * If that condition happens the dictionary returned must be not empty
+ */
 TEST_F(HostImageTypeTest, TestHostsAssociation_getActiveHostsFromEntityManager)
 {
     TestImagetypeHostsAssociation hostsAssoc(_bus, _cpld_dir);
@@ -352,6 +439,14 @@ TEST_F(HostImageTypeTest, TestHostsAssociation_getActiveHostsFromEntityManager)
 }
 
 
+/**
+ * Tests the method ImagetypeHostsAssociation::createImageTypeList()
+ *
+ * It uses a dictionary returned by
+ *   ImagetypeHostsAssociation::getActiveHostsFromEntityManager()
+ *
+ * If that dictionary is not empty, the list created must also be not empty
+ */
 TEST_F(HostImageTypeTest, TestHostsAssociation_createImageTypeList)
 {
     TestImagetypeHostsAssociation hostsAssoc(_bus, _cpld_dir);
@@ -361,6 +456,17 @@ TEST_F(HostImageTypeTest, TestHostsAssociation_createImageTypeList)
 }
 
 
+/**
+ * Tests the method ImagetypeHostsAssociation::identifyImageType() using a
+ * 'cpld' directory image.
+ *
+ * The method above depends on :
+ *    ImagetypeHostsAssociation::getActiveHostsFromEntityManager()
+ *    ImagetypeHostsAssociation::createImageTypeList()
+ *
+ *  So the return from ImagetypeHostsAssociation::imageType() must be 'cpld'
+ *
+ */
 TEST_F(HostImageTypeTest, TestHostsAssociation_identifyImageType_cpld)
 {
     TestImagetypeHostsAssociation hostsAssoc(_bus, _cpld_dir);
@@ -375,6 +481,12 @@ TEST_F(HostImageTypeTest, TestHostsAssociation_identifyImageType_cpld)
 }
 
 
+/**
+ *  Same test as previous for ImagetypeHostsAssociation::identifyImageType()
+ *    but using 'bios' directory image instead of 'cpld'
+ *
+ *  So the return from ImagetypeHostsAssociation::imageType() must be 'bios'
+ */
 TEST_F(HostImageTypeTest, TestHostsAssociation_identifyImageType_bios)
 {
     TestImagetypeHostsAssociation hostsAssoc(_bus, _bios_dir);
@@ -389,7 +501,14 @@ TEST_F(HostImageTypeTest, TestHostsAssociation_identifyImageType_bios)
 }
 
 
-
+/**
+ * Another test for ImagetypeHostsAssociation::identifyImageType() but in this
+ *   case the image type comes from the MANIFEST file
+ *
+ * The test forces the image type 'vr' by written 'ImageType' record in the
+ *   MANIFEST file, and, as the 'vr' image type was not defined in
+ *   Entity Manager, the list comes empty but the image type is 'vr'.
+ */
 TEST_F(HostImageTypeTest, TestHostsAssociation_identifyImageType_Manifest_file)
 {
     std::string manifest_file{_none_dir};
@@ -412,6 +531,16 @@ TEST_F(HostImageTypeTest, TestHostsAssociation_identifyImageType_Manifest_file)
 }
 
 
+/**
+ * Test the method ImagetypeHostsAssociation::removeHostsImageTypeNotIn()
+ *
+ * This test one of cases where the association between 'image type' and hosts
+ *   may not happen.
+ *
+ * The  image types identified in Entity Manager are 'bios' and 'cpld', but
+ *   forcing 'vr' in MANIFEST file causes the dictionary to be empty
+ *   because no hosts accept the 'vr' image type.
+ */
 TEST_F(HostImageTypeTest, TestHostsAssociation_removeHostsImageTypeNotIn)
 {
     TestImagetypeHostsAssociation hostsAssoc(_bus, _cpld_dir);
@@ -439,6 +568,11 @@ TEST_F(HostImageTypeTest, TestHostsAssociation_removeHostsImageTypeNotIn)
 }
 
 
+/**
+ * Simple test for utils::isMultiHostMachine() and utils::getMultiHostIds()
+ *
+ * Multi host machines will have an array of IDs, and singe host machines not
+ */
 TEST_F(HostImageTypeTest, Utils_getMultiHostIds)
 {
    std::vector<std::string> host_ids = utils::getMultiHostIds();
