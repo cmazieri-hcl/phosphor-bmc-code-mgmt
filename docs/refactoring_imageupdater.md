@@ -88,6 +88,7 @@ The *Activation* class becomes abstract and new classes *ActivationBmc* and
 |void onStateChanges()|pure virtual from Flash  interface/class |
 |void flashWrite()|pure virtual from Flash  interface/class |
 |Activations activation(Activations value) override|virtual|
+|void unitStateChange(sdbusplus::message::message &|pure virtual|
 
 
 ### File organization regarding Activation class

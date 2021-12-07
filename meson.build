@@ -185,7 +185,6 @@ image_updater_sources = files(
 
 if get_option('bmc-layout').contains('static')
     image_updater_sources += files(
-        'static/flash.cpp',
         'static/item_updater_helper.cpp'
     )
 elif get_option('bmc-layout').contains('ubi')

@@ -4,6 +4,7 @@
 
 #include "flash.hpp"
 #include "utils.hpp"
+#include <xyz/openbmc_project/Common/error.hpp>
 #include "xyz/openbmc_project/Software/ActivationProgress/server.hpp"
 #include "xyz/openbmc_project/Software/RedundancyPriority/server.hpp"
 
@@ -11,6 +12,8 @@
 #include <xyz/openbmc_project/Association/Definitions/server.hpp>
 #include <xyz/openbmc_project/Software/Activation/server.hpp>
 #include <xyz/openbmc_project/Software/ActivationBlocksTransition/server.hpp>
+
+
 
 #ifdef WANT_SIGNATURE_VERIFY
 #include <filesystem>
@@ -44,6 +47,10 @@ using ActivationProgressInherit = sdbusplus::server::object::object<
 using ActivationStateValue =
  sdbusplus::xyz::openbmc_project::Software::server::Activation::Activations;
 
+using InternalFailure =
+    sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
+
+namespace softwareServer = sdbusplus::xyz::openbmc_project::Software::server;
 
 
 constexpr auto applyTimeImmediate =
@@ -218,7 +225,7 @@ class Activation : public ActivationInherit, public Flash
      *
      * @return Success or exception thrown
      */
-    Activations activation(Activations value) override;
+    virtual ActivationStateValue activation(ActivationStateValue value);
 
     /** @brief Activation */
     using ActivationInherit::activation;
@@ -232,20 +239,6 @@ class Activation : public ActivationInherit, public Flash
     RequestedActivations
         requestedActivation(RequestedActivations value) override;
 
-    /** @brief Overloaded write flash function */
-    void flashWrite() override;
-
-    /**
-     * @brief Handle the success of the flashWrite() function
-     *
-     * @details Perform anything that is necessary to mark the activation
-     * successful after the image has been written to flash. Sets the Activation
-     * value to Active.
-     */
-    void onFlashWriteSuccess();
-
-    /** @brief Overloaded function that acts on service file state changes */
-    void onStateChanges(sdbusplus::message::message&) override;
 
     /** @brief Check if systemd state change is relevant to this object
      *
@@ -255,7 +248,7 @@ class Activation : public ActivationInherit, public Flash
      * @param[in]  msg       - Data associated with subscribed signal
      *
      */
-    void unitStateChange(sdbusplus::message::message& msg);
+    virtual void unitStateChange(sdbusplus::message::message& msg) = 0;
 
     /**
      * @brief subscribe to the systemd signals
@@ -288,13 +281,6 @@ class Activation : public ActivationInherit, public Flash
      * @return true if the image apply time value is immediate
      **/
     bool checkApplyTimeImmediate();
-
-    /**
-     * @brief Reboot the BMC. Called when ApplyTime is immediate.
-     *
-     * @return none
-     **/
-    void rebootBmc();
 
     /** @brief Persistent sdbusplus DBus bus connection */
     sdbusplus::bus::bus& bus;
@@ -333,7 +319,7 @@ class Activation : public ActivationInherit, public Flash
     bool ubootEnvVarsUpdated = false;
 
 #ifdef WANT_SIGNATURE_VERIFY
-  private:
+  protected:
     /** @brief Verify signature of the images.
      *
      * @param[in] imageDir - The path of images to verify

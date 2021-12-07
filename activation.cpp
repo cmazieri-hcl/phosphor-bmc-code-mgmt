@@ -1,3 +1,4 @@
+
 #include "activation.hpp"
 
 #include "images.hpp"
@@ -11,7 +12,6 @@
 #include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/exception.hpp>
-#include <xyz/openbmc_project/Common/error.hpp>
 #include <xyz/openbmc_project/Software/Version/error.hpp>
 
 #ifdef WANT_SIGNATURE_VERIFY
@@ -27,12 +27,9 @@ namespace software
 namespace updater
 {
 
-namespace softwareServer = sdbusplus::xyz::openbmc_project::Software::server;
-
 PHOSPHOR_LOG2_USING;
 using namespace phosphor::logging;
-using InternalFailure =
-    sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
+
 
 #ifdef WANT_SIGNATURE_VERIFY
 namespace control = sdbusplus::xyz::openbmc_project::Control::server;
@@ -80,130 +77,6 @@ void Activation::unsubscribeFromSystemdSignals()
     return;
 }
 
-auto Activation::activation(Activations value) -> Activations
-{
-    if ((value != softwareServer::Activation::Activations::Active) &&
-        (value != softwareServer::Activation::Activations::Activating))
-    {
-        redundancyPriority.reset(nullptr);
-    }
-
-    if (value == softwareServer::Activation::Activations::Activating)
-    {
-#ifdef WANT_SIGNATURE_VERIFY
-        fs::path uploadDir(IMG_UPLOAD_DIR);
-        if (!verifySignature(uploadDir / versionId, SIGNED_IMAGE_CONF_PATH))
-        {
-            onVerifyFailed();
-            // Stop the activation process, if fieldMode is enabled.
-            if (parent.control::FieldMode::fieldModeEnabled())
-            {
-                return softwareServer::Activation::activation(
-                    softwareServer::Activation::Activations::Failed);
-            }
-        }
-#endif
-
-        auto versionStr = parent.versions.find(versionId)->second->version();
-
-        if (!minimum_ship_level::verify(versionStr))
-        {
-            using namespace phosphor::logging;
-            using IncompatibleErr = sdbusplus::xyz::openbmc_project::Software::
-                Version::Error::Incompatible;
-            using Incompatible =
-                xyz::openbmc_project::Software::Version::Incompatible;
-
-            report<IncompatibleErr>(
-                prev_entry<Incompatible::MIN_VERSION>(),
-                prev_entry<Incompatible::ACTUAL_VERSION>(),
-                prev_entry<Incompatible::VERSION_PURPOSE>());
-            return softwareServer::Activation::activation(
-                softwareServer::Activation::Activations::Failed);
-        }
-
-        if (!activationProgress)
-        {
-            activationProgress =
-                std::make_unique<ActivationProgress>(bus, path);
-        }
-
-        if (!activationBlocksTransition)
-        {
-            activationBlocksTransition =
-                std::make_unique<ActivationBlocksTransition>(bus, path);
-        }
-
-        activationProgress->progress(10);
-
-        parent.freeSpace(*this);
-
-        // Enable systemd signals
-        Activation::subscribeToSystemdSignals();
-
-        flashWrite();
-
-#if defined UBIFS_LAYOUT || defined MMC_LAYOUT
-
-        return softwareServer::Activation::activation(value);
-
-#else // STATIC_LAYOUT
-
-        onFlashWriteSuccess();
-        return softwareServer::Activation::activation(
-            softwareServer::Activation::Activations::Active);
-#endif
-    }
-    else
-    {
-        activationBlocksTransition.reset(nullptr);
-        activationProgress.reset(nullptr);
-    }
-    return softwareServer::Activation::activation(value);
-}
-
-void Activation::onFlashWriteSuccess()
-{
-    activationProgress->progress(100);
-
-    activationBlocksTransition.reset(nullptr);
-    activationProgress.reset(nullptr);
-
-    rwVolumeCreated = false;
-    roVolumeCreated = false;
-    ubootEnvVarsUpdated = false;
-    Activation::unsubscribeFromSystemdSignals();
-
-    storePurpose(versionId, parent.versions.find(versionId)->second->purpose());
-
-    if (!redundancyPriority)
-    {
-        redundancyPriority =
-            std::make_unique<RedundancyPriority>(bus, path, *this, 0);
-    }
-
-    // Remove version object from image manager
-    Activation::deleteImageManagerObject();
-
-    // Create active association
-    parent.createActiveAssociation(path);
-
-    // Create updateable association as this
-    // can be re-programmed.
-    parent.createUpdateableAssociation(path);
-
-    if (Activation::checkApplyTimeImmediate() == true)
-    {
-        info("Image Active and ApplyTime is immediate; rebooting BMC.");
-        Activation::rebootBmc();
-    }
-    else
-    {
-        info("BMC image ready; need reboot to get activated.");
-    }
-
-    activation(softwareServer::Activation::Activations::Active);
-}
 
 void Activation::deleteImageManagerObject()
 {
@@ -223,6 +96,17 @@ void Activation::deleteImageManagerObject()
     }
 }
 
+/**
+ * @brief It does nothing and MUST be reimplemented in children classes
+ * @param value
+ * @return
+ */
+ActivationStateValue
+Activation::activation(ActivationStateValue value)
+{
+     return softwareServer::Activation::activation(value);
+}
+
 auto Activation::requestedActivation(RequestedActivations value)
     -> RequestedActivations
 {
@@ -235,12 +119,11 @@ auto Activation::requestedActivation(RequestedActivations value)
          softwareServer::Activation::RequestedActivations::Active))
     {
         if ((softwareServer::Activation::activation() ==
-             softwareServer::Activation::Activations::Ready) ||
+             ActivationStateValue::Ready) ||
             (softwareServer::Activation::activation() ==
-             softwareServer::Activation::Activations::Failed))
+             ActivationStateValue::Failed))
         {
-            Activation::activation(
-                softwareServer::Activation::Activations::Activating);
+            Activation::activation(ActivationStateValue::Activating);
         }
     }
     return softwareServer::Activation::requestedActivation(value);
@@ -262,18 +145,6 @@ uint8_t RedundancyPriority::sdbusPriority(uint8_t value)
     return softwareServer::RedundancyPriority::priority(value);
 }
 
-void Activation::unitStateChange(sdbusplus::message::message& msg)
-{
-    if (softwareServer::Activation::activation() !=
-        softwareServer::Activation::Activations::Activating)
-    {
-        return;
-    }
-
-    onStateChanges(msg);
-
-    return;
-}
 
 #ifdef WANT_SIGNATURE_VERIFY
 bool Activation::verifySignature(const fs::path& imageDir,
@@ -349,24 +220,6 @@ bool Activation::checkApplyTimeImmediate()
     return false;
 }
 
-
-void Activation::rebootBmc()
-{
-    auto method = bus.new_method_call(SYSTEMD_BUSNAME, SYSTEMD_PATH,
-                                      SYSTEMD_INTERFACE, "StartUnit");
-    method.append("force-reboot.service", "replace");
-    try
-    {
-        auto reply = bus.call(method);
-    }
-    catch (const sdbusplus::exception::exception& e)
-    {
-        alert("Error in trying to reboot the BMC. The BMC needs to be manually "
-              "rebooted to complete the image activation. {ERROR}",
-              "ERROR", e);
-        report<InternalFailure>();
-    }
-}
 
 } // namespace updater
 } // namespace software
