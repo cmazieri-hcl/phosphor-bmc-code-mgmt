@@ -245,12 +245,12 @@ void ItemUpdaterBmc::processBMCImage()
 
             // Create Activation instance for this version.
             activations.insert(std::make_pair(
-                id, std::make_unique<Activation>(
+                id, std::make_unique<ActivationBmc>(
                         bus, path, *this, id, activationState, associations)));
 
             // If Active, create RedundancyPriority instance for this
             // version.
-            if (activationState == server::Activation::Activations::Active)
+            if (activationState == ActivationStateValue::Active)
             {
                 uint8_t priority = std::numeric_limits<uint8_t>::max();
                 if (!restorePriority(id, priority))
