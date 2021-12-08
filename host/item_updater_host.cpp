@@ -3,6 +3,7 @@
 
 #include "item_updater_host.hpp"
 #include "imagetype_host_association.hpp"
+#include "activation_host.hpp"
 
 #include <phosphor-logging/lg2.hpp>
 
@@ -49,26 +50,31 @@ void ItemUpdaterHost::createActivation(sdbusplus::message::message &msg)
 {
     SoftwareVersionMessage imgMsg(msg);
     if (imgMsg.isValid() == false
+          || imgMsg.isPurposeHOST() == false
           || multiActivations.find(imgMsg.versionId) != multiActivations.end())
     {
         return;
     }
 
-    ImagetypeHostsAssociation hostsAssociation(bus, imgMsg.path);
+    ImagetypeHostsAssociation hostsAssociation(bus, imgMsg.filePath);
     auto  hosts_assoc_imgType =  hostsAssociation.associatedHostsIds();
 
     // finally creates Activation for hosts in the list
     if (hostsAssociation.isValid() && hosts_assoc_imgType.empty() == false)
     {
         ItemUpdater::createVersion(imgMsg);
-        auto activationState = server::Activation::Activations::Ready;
+        auto activationState = ActivationStateValue::Ready;
         AssociationList associations = {};
-        for (const auto& host : hosts_assoc_imgType)
+        ActivationMap   activations;
+        for (const auto& imgType_host : hosts_assoc_imgType)
         {
-            (void) host;
-            (void) activationState;
-            (void) associations;
+            auto host_obj_path  =  imgMsg.path + '/' + imgType_host;
+            activations.insert(std::make_pair(host_obj_path,
+                    std::make_unique<ActivationHost>
+                    (bus, host_obj_path, *this, imgMsg.versionId,
+                     activationState, associations)));
         }
+        this->multiActivations[imgMsg.versionId] = std::move(activations);
     }
 }
 

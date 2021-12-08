@@ -19,6 +19,36 @@ ActivationHost::ActivationHost(sdbusplus::bus::bus &bus,
     // Empty
 }
 
+ActivationStateValue ActivationHost::activation(ActivationStateValue value)
+{
+    return value;
+}
+
+void ActivationHost::flashWrite()
+{
+
+}
+
+void ActivationHost::onFlashWriteSuccess()
+{
+
+}
+
+void ActivationHost::onStateChanges(sdbusplus::message::message &)
+{
+
+}
+
+void ActivationHost::unitStateChange(sdbusplus::message::message &msg)
+{
+    if (softwareServer::Activation::activation() !=
+        ActivationStateValue::Activating)
+    {
+        return;
+    }
+    onStateChanges(msg);
+}
+
 
 } // namespace updater
 } // namespace software

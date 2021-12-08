@@ -334,8 +334,10 @@ class Activation : public ActivationInherit, public Flash
 #endif
 };
 
-using ActivationMap = std::map<std::string,
-                      std::unique_ptr<phosphor::software::updater::Activation>>;
+using ActivationUniquePtr =
+   std::unique_ptr<phosphor::software::updater::Activation>;
+
+using ActivationMap = std::map<std::string, ActivationUniquePtr>;
 
 using MultiActivation = std::map<std::string, ActivationMap>;
 
