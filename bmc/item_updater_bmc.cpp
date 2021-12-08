@@ -149,7 +149,7 @@ void ItemUpdaterBmc::processBMCImage()
     // BMC Software Versions.
     for (const auto& iter : fs::directory_iterator(MEDIA_DIR))
     {
-        auto activationState = server::Activation::Activations::Active;
+        auto activationState = ActivationStateValue::Active;
         static const auto BMC_RO_PREFIX_LEN = strlen(BMC_ROFS_PREFIX);
 
         // Check if the BMC_RO_PREFIXis the prefix of the iter.path
@@ -215,7 +215,7 @@ void ItemUpdaterBmc::processBMCImage()
 
             AssociationList associations = {};
 
-            if (activationState == server::Activation::Activations::Active)
+            if (activationState == ActivationStateValue::Active)
             {
                 // Create an association to the BMC inventory item
                 associations.emplace_back(std::make_tuple(
@@ -370,7 +370,7 @@ void ItemUpdaterBmc::createActivation(sdbusplus::message::message& msg)
     }
 
     // Determine the Activation state by processing the given image dir.
-    auto activationState = server::Activation::Activations::Invalid;
+    auto activationState = ActivationStateValue::Invalid;
     ItemUpdater::ActivationStatus result =
             ItemUpdater::validateSquashFSImage(imgMsg.filePath);
 
@@ -378,7 +378,7 @@ void ItemUpdaterBmc::createActivation(sdbusplus::message::message& msg)
 
     if (result == ItemUpdater::ActivationStatus::ready)
     {
-        activationState = server::Activation::Activations::Ready;
+        activationState = ActivationStateValue::Ready;
         // Create an association to the BMC inventory item
         associations.emplace_back(
                  std::make_tuple(ACTIVATION_FWD_ASSOCIATION,
@@ -406,10 +406,8 @@ void ItemUpdaterBmc::freeSpace(Activation& caller)
     std::size_t count = 0;
     for (const auto& iter : activations)
     {
-        if ((iter.second.get()->activation() ==
-             server::Activation::Activations::Active) ||
-            (iter.second.get()->activation() ==
-             server::Activation::Activations::Failed))
+        if ((iter.second.get()->activation() == ActivationStateValue::Active) ||
+            (iter.second.get()->activation() == ActivationStateValue::Failed))
         {
             count++;
             // Don't put the functional version on the queue since we can't
@@ -428,9 +426,8 @@ void ItemUpdaterBmc::freeSpace(Activation& caller)
             // Failed activations don't have priority, assign them a large value
             // for sorting purposes.
             auto priority = 999;
-            if (iter.second.get()->activation() ==
-                    server::Activation::Activations::Active &&
-                iter.second->redundancyPriority)
+            if (iter.second.get()->activation() == ActivationStateValue::Active
+                 && iter.second->redundancyPriority)
             {
                 priority = iter.second->redundancyPriority.get()->priority();
             }
