@@ -165,6 +165,7 @@ unit_files = [
     'force-reboot.service.in',
     'usr-local.mount.in',
     'xyz.openbmc_project.Software.BMC.Updater.service.in',
+    'xyz.openbmc_project.Software.HOST.Updater.service.in',
     'xyz.openbmc_project.Software.Download.service.in',
     'xyz.openbmc_project.Software.Sync.service.in',
     'xyz.openbmc_project.Software.Version.service.in'

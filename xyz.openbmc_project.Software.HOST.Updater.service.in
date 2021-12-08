@@ -1,12 +1,12 @@
 [Unit]
-Description=OpenBMC Software Update Manager for BMC
+Description=OpenBMC Software Update Manager for Devices
 Wants=xyz.openbmc_project.Software.Version.service
 Before=xyz.openbmc_project.Software.Version.service
 Wants=obmc-mapper.target
 After=obmc-mapper.target
 
 [Service]
-ExecStart=/usr/bin/phosphor-bmc-image-updater
+ExecStart=/usr/bin/phosphor-host-image-updater
 Restart=always
 Type=dbus
 BusName={BUSNAME}
