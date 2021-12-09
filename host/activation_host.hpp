@@ -30,6 +30,9 @@ class ActivationHost : public Activation
      void onStateChanges(sdbusplus::message::message&) override;
 
      void unitStateChange(sdbusplus::message::message& msg) override;
+
+  private:
+     std::string baseServiceFileName();
 };
 
 

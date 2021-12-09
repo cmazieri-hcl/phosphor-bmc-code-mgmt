@@ -3,7 +3,7 @@
 #include "activation_bmc.hpp"
 #include "images.hpp"
 #include "serialize.hpp"
-#include "item_updater.hpp"
+#include "item_updater_bmc.hpp"
 #include "msl_verify.hpp"
 
 #include <phosphor-logging/elog-errors.hpp>
@@ -63,7 +63,6 @@ ActivationBmc::activation(ActivationStateValue value)
             }
         }
 #endif
-
         auto versionStr = parent.versions.find(versionId)->second->version();
 
         if (!minimum_ship_level::verify(versionStr))
@@ -141,6 +140,7 @@ void ActivationBmc::flashWrite()
     }
 }
 
+
 void ActivationBmc::onFlashWriteSuccess()
 {
     activationProgress->progress(100);
@@ -184,14 +184,16 @@ void ActivationBmc::onFlashWriteSuccess()
     activation(ActivationStateValue::Active);
 }
 
+
 void ActivationBmc::onStateChanges(sdbusplus::message::message &)
 {
     // Empty
 }
 
+
 void ActivationBmc::unitStateChange(sdbusplus::message::message &)
 {
-     // Empty
+    // Empty
 }
 
 
@@ -212,7 +214,6 @@ void ActivationBmc::rebootBmc()
         report<InternalFailure>();
     }
 }
-
 
 
 } // namespace updater
