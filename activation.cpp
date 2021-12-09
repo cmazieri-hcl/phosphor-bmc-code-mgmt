@@ -1,4 +1,3 @@
-
 #include "activation.hpp"
 
 #include "images.hpp"
@@ -27,6 +26,8 @@ namespace software
 namespace updater
 {
 
+int Activation::subscribeToSystemdCounter = 0;
+
 PHOSPHOR_LOG2_USING;
 using namespace phosphor::logging;
 
@@ -37,6 +38,11 @@ namespace control = sdbusplus::xyz::openbmc_project::Control::server;
 
 void Activation::subscribeToSystemdSignals()
 {
+    if (Activation::subscribeToSystemdCounter++ > 0)
+    {
+        return; // already subscribed
+    }
+
     auto method = this->bus.new_method_call(SYSTEMD_BUSNAME, SYSTEMD_PATH,
                                             SYSTEMD_INTERFACE, "Subscribe");
     try
@@ -63,6 +69,11 @@ void Activation::subscribeToSystemdSignals()
 
 void Activation::unsubscribeFromSystemdSignals()
 {
+    // let unsubscribe only when counter == 0
+    if (--Activation::subscribeToSystemdCounter > 0)
+    {
+        return;
+    }
     auto method = this->bus.new_method_call(SYSTEMD_BUSNAME, SYSTEMD_PATH,
                                             SYSTEMD_INTERFACE, "Unsubscribe");
     try

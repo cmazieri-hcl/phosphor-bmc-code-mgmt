@@ -318,6 +318,8 @@ class Activation : public ActivationInherit, public Flash
      *         variables has completed. **/
     bool ubootEnvVarsUpdated = false;
 
+    static int subscribeToSystemdCounter;
+
 #ifdef WANT_SIGNATURE_VERIFY
   protected:
     /** @brief Verify signature of the images.
