@@ -60,21 +60,47 @@ void ItemUpdaterHost::createActivation(sdbusplus::message::message &msg)
     auto  hosts_assoc_imgType =  hostsAssociation.associatedHostsIds();
 
     // finally creates Activation for hosts in the list
-    if (hostsAssociation.isValid() && hosts_assoc_imgType.empty() == false)
+     if (hostsAssociation.isValid() && hosts_assoc_imgType.empty() == false)
+     {
+         ItemUpdater::createVersion(imgMsg);
+         auto activationState = ActivationStateValue::Ready;
+         AssociationList associations = {};
+         ActivationMap   activations;
+         for (const auto& imgType_host : hosts_assoc_imgType)
+         {
+             auto host_obj_path  =  imgMsg.path + '/' + imgType_host;
+             activations.insert(
+                  std::make_pair(host_obj_path,
+                                 std::make_unique<ActivationHost>
+                                 (bus, host_obj_path, *this, imgMsg.versionId,
+                                 activationState, associations)));
+         }
+         this->multiActivations[imgMsg.versionId] = std::move(activations);
+     }
+}
+
+
+void ItemUpdaterHost::onActivationDone(const std::string &imageVersionId)
+{
+    bool allDone = true;
+    for (const auto &activationMap : this->multiActivations)
     {
-        ItemUpdater::createVersion(imgMsg);
-        auto activationState = ActivationStateValue::Ready;
-        AssociationList associations = {};
-        ActivationMap   activations;
-        for (const auto& imgType_host : hosts_assoc_imgType)
+        if (activationMap.first == imageVersionId)
         {
-            auto host_obj_path  =  imgMsg.path + '/' + imgType_host;
-            activations.insert(std::make_pair(host_obj_path,
-                    std::make_unique<ActivationHost>
-                    (bus, host_obj_path, *this, imgMsg.versionId,
-                     activationState, associations)));
+            for (const auto& activation : activationMap.second)
+            {
+                if (activation.second->activation()
+                        != ActivationStateValue::Active)
+                {
+                    allDone = false;
+                    break;
+                }
+            }
         }
-        this->multiActivations[imgMsg.versionId] = std::move(activations);
+    }
+    if (allDone)
+    {
+        this->multiActivations.erase(imageVersionId);
     }
 }
 

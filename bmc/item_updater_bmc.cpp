@@ -358,6 +358,11 @@ void ItemUpdaterBmc::freePriority(uint8_t value, const std::string &versionId)
     updateUbootEnvVars(lowestVersion);
 }
 
+void ItemUpdaterBmc::onActivationDone(const std::string &)
+{
+    // Empty
+}
+
 
 void ItemUpdaterBmc::createActivation(sdbusplus::message::message& msg)
 {

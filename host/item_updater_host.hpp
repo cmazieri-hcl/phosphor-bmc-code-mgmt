@@ -18,11 +18,10 @@ class ItemUpdaterHost : public ItemUpdater
     void erase(std::string entryId) override;
     void freeSpace(Activation& caller) override;
     void freePriority(uint8_t value, const std::string& versionId) override;
+    void onActivationDone(const std::string& imageVersionId) override;
 
- private: // reimplementations from parent class
+ protected: // reimplementations from parent class
     void createActivation(sdbusplus::message::message& msg) override;
-
- private:
 
  private:
     /** @brief Persistent map of Activation D-Bus objects and their

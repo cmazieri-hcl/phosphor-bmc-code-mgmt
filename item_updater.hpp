@@ -108,6 +108,13 @@ class ItemUpdater : public ItemUpdaterInherit
      */
     void savePriority(const std::string& versionId, uint8_t value);
 
+    /**
+     * @brief Pure virtual function to finish an update
+     * @param imageVersionId the versionId
+     */
+    virtual void onActivationDone(const std::string& imageVersionId) = 0;
+
+
     /** @brief Sets the given priority free by incrementing
      *  any existing priority with the same value by 1
      *
@@ -171,6 +178,10 @@ class ItemUpdater : public ItemUpdaterInherit
     std::vector<std::string> imageUpdateList;
 
   protected:
+    /**
+     * @brief Helper function to create VersionClass object and Delete object
+     * @param versionInfo contains all the information about the version
+     */
     void  createVersion(const SoftwareVersionMessage& versionInfo);
 
     std::string freePriority(ActivationMap& activationContaier, uint8_t value,
