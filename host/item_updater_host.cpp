@@ -63,6 +63,8 @@ void ItemUpdaterHost::createActivation(sdbusplus::message::message &msg)
      if (hostsAssociation.isValid() && hosts_assoc_imgType.empty() == false)
      {
          ItemUpdater::createVersion(imgMsg);
+         createActiveAssociation(imgMsg.path);
+         createFunctionalAssociation(imgMsg.path);
          auto activationState = ActivationStateValue::Ready;
          AssociationList associations = {};
          ActivationMap   activations;
