@@ -31,25 +31,25 @@ ActivationHost::ActivationHost(sdbusplus::bus::bus &bus,
 
 ActivationStateValue ActivationHost::activation(ActivationStateValue value)
 {
-    if ((value != softwareServer::Activation::Activations::Active) &&
-            (value != softwareServer::Activation::Activations::Activating))
+    if ((value != ActivationStateValue::Active) &&
+            (value != ActivationStateValue::Activating))
     {
         redundancyPriority.reset(nullptr);
     }
 
-    if (value == softwareServer::Activation::Activations::Activating)
+    if (value == ActivationStateValue::Activating)
     {
         if (activationProgress == nullptr)
         {
             activationProgress =
                     std::make_unique<ActivationProgress>(bus, path);
         }
+        // set current State on object path
+        activation(ActivationStateValue::Activating);
         // Enable systemd signals
         subscribeToSystemdSignals();
-
         // Set initial progress
         activationProgress->progress(2);
-
         // Initiate image writing to flash
         flashWrite();
     }
@@ -112,7 +112,7 @@ void ActivationHost::onStateChanges(sdbusplus::message::message &msg)
     uint32_t newStateID{};
     msg.read(newStateID, newStateObjPath, newStateUnit, newStateResult);
     auto baseServiceFile = this->baseServiceFileName();
-    // if does NOT start with obmc-flash-host@<ImgId>-<ImgType>[-HostId]
+    // does NOT start with obmc-flash-host-software@<ImgId>-<ImgType>[-HostId]
     if (newStateUnit.rfind(baseServiceFile, 0) != 0)
     {
         return;
@@ -148,7 +148,7 @@ void ActivationHost::unitStateChange(sdbusplus::message::message &msg)
 
 std::string ActivationHost::baseServiceFileName()
 {
-    std::string basename = "obmc-flash-host@" + versionId + '-';
+    std::string basename = "obmc-flash-host-software@" + versionId + '-';
     auto slash_position = path.find_last_of('/');
     auto imageType_host = path.substr(slash_position+1,
                                      path.size() - slash_position -1);
