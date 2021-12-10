@@ -1,0 +1,26 @@
+[Unit]
+Description=host service flash, the %i can be in the form \
+                    imageid-imagetype-hostid (minus sign among them)
+
+[Service]
+## in multi-host machines be careful about the "type"
+## as the environment is used they should not start at same time
+Type=exec
+RemainAfterExit=no
+
+ExecStartPre=/bin/sh -c "image=`/bin/echo %i | /usr/bin/awk  \
+                -F'-' '{print $1}'` && \
+                /bin/systemctl set-environment IMAGEID=$image"
+
+ExecStartPre=/bin/sh -c "type=`/bin/echo  %i | /usr/bin/awk  \
+                -F'-' '{print $2}'` && \
+                /bin/systemctl set-environment IMAGETYPE=$type"
+
+ExecStartPre=/bin/sh -c "host=`/bin/echo  %i | /usr/bin/awk  \
+                -F'-' '{print $3}'` && \
+                /bin/systemctl set-environment HOSTID=$host"
+
+
+## Note: single-host machines will bring empty HOSTID variable
+
+ExecStart=[flash tool here]  /tmp/images/${IMAGEID} ${IMAGETYPE} ${HOSTID}

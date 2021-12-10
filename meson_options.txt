@@ -9,8 +9,8 @@ option('bmc-layout', type: 'combo',
     description: 'The BMC layout type.')
 
 # Features
-option('host-bios-upgrade', type: 'feature', value: 'enabled',
-    description: 'Enable host bios upgrade support.')
+option('host-software-upgrade', type: 'feature', value: 'enabled',
+    description: 'Enable host software upgrade support.')
 
 option('sync-bmc-files', type: 'feature', value: 'enabled',
     description: 'Enable sync of filesystem files.')
@@ -104,11 +104,6 @@ option(
     description: 'The Regular expression to parse the MSL.',
 )
 
-option(
-    'bios-object-path', type: 'string',
-    value: '/xyz/openbmc_project/software/bios_active',
-    description: 'The BIOS DBus object path.',
-)
 
 option('obmc_host_instances', type: 'string',
     value: '0',
