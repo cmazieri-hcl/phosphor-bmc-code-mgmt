@@ -89,24 +89,6 @@ void Activation::unsubscribeFromSystemdSignals()
 }
 
 
-void Activation::deleteImageManagerObject()
-{
-    // Call the Delete object for <versionID> inside image_manager
-    auto method = this->bus.new_method_call(VERSION_BUSNAME, path.c_str(),
-                                            "xyz.openbmc_project.Object.Delete",
-                                            "Delete");
-    try
-    {
-        bus.call_noreply(method);
-    }
-    catch (const sdbusplus::exception::exception& e)
-    {
-        error("Error deleting image ({PATH}) from image manager: {ERROR}",
-              "PATH", path, "ERROR", e);
-        return;
-    }
-}
-
 /**
  * @brief It does nothing and MUST be reimplemented in children classes
  * @param value
@@ -117,6 +99,7 @@ Activation::activation(ActivationStateValue value)
 {
      return softwareServer::Activation::activation(value);
 }
+
 
 auto Activation::requestedActivation(RequestedActivations value)
     -> RequestedActivations

@@ -212,6 +212,26 @@ bool ItemUpdater::checkImage(const std::string& filePath,
 }
 
 
+void ItemUpdater::deleteImageManagerObject()
+{
+    // Call the Delete object for <versionID> inside image_manager
+    auto method = this->bus.new_method_call(VERSION_BUSNAME,
+                                            img_obj_path.c_str(),
+                                            "xyz.openbmc_project.Object.Delete",
+                                            "Delete");
+    try
+    {
+        bus.call_noreply(method);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        error("Error deleting image ({PATH}) from image manager: {ERROR}",
+              "PATH", img_obj_path, "ERROR", e);
+        return;
+    }
+}
+
+
 void ItemUpdater::deleteAll()
 {
     std::vector<std::string> deletableVersions;

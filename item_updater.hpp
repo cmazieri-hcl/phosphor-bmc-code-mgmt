@@ -87,7 +87,8 @@ class ItemUpdater : public ItemUpdaterInherit
      * @param[in] bus    - The D-Bus bus object
      */
     ItemUpdater(sdbusplus::bus::bus& bus, const std::string& path) :
-        ItemUpdaterInherit(bus, path.c_str(), false), bus(bus), helper(bus),
+        ItemUpdaterInherit(bus, path.c_str(), false),
+        bus(bus), helper(bus), img_obj_path(path),
         versionMatch(bus,
                      MatchRules::interfacesAdded() +
                          MatchRules::path("/xyz/openbmc_project/software"),
@@ -137,6 +138,12 @@ class ItemUpdater : public ItemUpdaterInherit
      * @brief Deletes all versions except for the current one
      */
      void deleteAll() override;
+
+     /**
+      * @brief Deletes the version from Image Manager and the
+      *        untar image from image upload dir.
+      */
+     void deleteImageManagerObject();
 
     /** @brief Creates an active association to the
      *  newly active software image
@@ -219,6 +226,8 @@ class ItemUpdater : public ItemUpdaterInherit
     /** @brief The helper of image updater. */
     Helper helper;
 
+    /** @brief object path of the image  */
+    std::string img_obj_path;
 
     /** @brief sdbusplus signal match for Software.Version */
     sdbusplus::bus::match_t versionMatch;
@@ -232,7 +241,6 @@ class ItemUpdater : public ItemUpdaterInherit
      * @param[in]  versionId - The version id.
      */
     void removeReadOnlyPartition(std::string versionId);
-
 
     /** @brief Check the required image files
      *

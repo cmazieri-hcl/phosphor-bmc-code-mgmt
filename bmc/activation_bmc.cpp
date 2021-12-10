@@ -162,7 +162,7 @@ void ActivationBmc::onFlashWriteSuccess()
     }
 
     // Remove version object from image manager
-    Activation::deleteImageManagerObject();
+    parent.deleteImageManagerObject();
 
     // Create active association
     parent.createActiveAssociation(path);

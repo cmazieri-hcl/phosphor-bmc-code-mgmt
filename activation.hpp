@@ -203,6 +203,9 @@ class Activation : public ActivationInherit, public Flash
                AssociationList& assocs) :
         ActivationInherit(bus, path.c_str(), true),
         bus(bus), path(path), parent(parent), versionId(versionId),
+        activationBlocksTransition(nullptr),
+        redundancyPriority(nullptr),
+        activationProgress(nullptr),
         systemdSignals(
             bus,
             sdbusRule::type::signal() + sdbusRule::member("JobRemoved") +
@@ -268,12 +271,6 @@ class Activation : public ActivationInherit, public Flash
      *
      */
     void unsubscribeFromSystemdSignals();
-
-    /**
-     * @brief Deletes the version from Image Manager and the
-     *        untar image from image upload dir.
-     */
-    void deleteImageManagerObject();
 
     /**
      * @brief Determine the configured image apply time value
