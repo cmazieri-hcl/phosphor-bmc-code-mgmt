@@ -4,6 +4,7 @@
 #include "item_updater_host.hpp"
 #include "imagetype_host_association.hpp"
 #include "activation_host.hpp"
+#include "serialize.hpp"
 
 #include <phosphor-logging/lg2.hpp>
 
@@ -100,9 +101,13 @@ void ItemUpdaterHost::onActivationDone(const std::string &imageVersionId)
             }
         }
     }
-    if (allDone)
+    if (allDone == true)
     {
+        storePurpose(imageVersionId,
+                     versions.find(imageVersionId)->second->purpose());
         this->multiActivations.erase(imageVersionId);
+        createActiveAssociation(img_obj_path);
+        createUpdateableAssociation(img_obj_path);
     }
 }
 

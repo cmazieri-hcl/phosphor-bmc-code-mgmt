@@ -37,15 +37,15 @@ ActivationStateValue ActivationHost::activation(ActivationStateValue value)
         redundancyPriority.reset(nullptr);
     }
 
-    if (value == ActivationStateValue::Activating)
+    auto curActivationStateValue = softwareServer::Activation::activation();
+    if (value == ActivationStateValue::Activating
+            && curActivationStateValue != ActivationStateValue::Activating)
     {
         if (activationProgress == nullptr)
         {
             activationProgress =
                     std::make_unique<ActivationProgress>(bus, path);
         }
-        // set current State on object path
-        activation(ActivationStateValue::Activating);
         // Enable systemd signals
         subscribeToSystemdSignals();
         // Set initial progress
@@ -53,7 +53,7 @@ ActivationStateValue ActivationHost::activation(ActivationStateValue value)
         // Initiate image writing to flash
         flashWrite();
     }
-    return value;
+    return softwareServer::Activation::activation(value);
 }
 
 
@@ -79,26 +79,12 @@ void ActivationHost::flashWrite()
 
 void ActivationHost::onFlashWriteSuccess()
 {
-    std::string str = "Host Software upgrade finished for " + path;
     // Set Activation value to active
-    activation(ActivationStateValue::Active);
+    softwareServer::Activation::activation(ActivationStateValue::Active);
+    std::string str = "Host Software upgrade finished for " + path;
     log<level::INFO>(str.c_str());
 
     parent.onActivationDone(versionId);
-
-    /**
-            * firmwareVersion used to be biosVersion, check master branch
-            * parent.firmwareVersion->version(
-            *         parent.versions.find(versionId)->second->version());
-            */
-
-/**
-    log<level::INFO>("performing cleaning...");
-    // just remove the image, the watcher will catch it
-    Helper helper(bus);
-    helper.removeVersion(versionId);
-
-    **/
 }
 
 
@@ -118,9 +104,11 @@ void ActivationHost::onStateChanges(sdbusplus::message::message &msg)
         return;
     }
 
+    //  set completed progress
     activationProgress->progress(100);
     // unsubscribe to systemd signals
     unsubscribeFromSystemdSignals();
+    activationProgress.reset(nullptr);
 
     if (newStateResult == "done")
     {
@@ -129,7 +117,7 @@ void ActivationHost::onStateChanges(sdbusplus::message::message &msg)
     else if (newStateResult == "failed")
     {
         // Set Activation value to Failed
-        activation(ActivationStateValue::Failed);
+        softwareServer::Activation::activation(ActivationStateValue::Failed);
         log<level::ERR>("Host Software upgrade failed.");
     }
 }
