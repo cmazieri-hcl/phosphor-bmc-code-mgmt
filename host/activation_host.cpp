@@ -63,7 +63,7 @@ void ActivationHost::flashWrite()
                                               SYSTEMD_INTERFACE, "StartUnit");
     auto serviceFileName = this->baseServiceFileName() + ".service";
     method.append(serviceFileName, "replace");
-    std::string msg = "launching host flash " + serviceFileName;
+    std::string msg = "launching Host Software upgrade " + serviceFileName;
     log<level::INFO>(msg.c_str());
     try
     {

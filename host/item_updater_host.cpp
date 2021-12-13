@@ -7,7 +7,10 @@
 #include "serialize.hpp"
 
 #include <phosphor-logging/lg2.hpp>
+#include <phosphor-logging/elog.hpp>
+#include <sdbusplus/bus.hpp>
 
+using namespace phosphor::logging;
 
 namespace phosphor
 {
@@ -101,14 +104,29 @@ void ItemUpdaterHost::onActivationDone(const std::string &imageVersionId)
             }
         }
     }
+    std::string msg{__func__};
+    msg += "(): ";
     if (allDone == true)
     {
-        storePurpose(imageVersionId,
-                     versions.find(imageVersionId)->second->purpose());
+        msg += "host(s) has/have been upgraded, removing the image ...";
         this->multiActivations.erase(imageVersionId);
-        createActiveAssociation(img_obj_path);
-        createUpdateableAssociation(img_obj_path);
+        std::string imageObjPath{SOFTWARE_OBJPATH};
+        imageObjPath += '/' + imageVersionId;
+        createActiveAssociation(imageObjPath);
+        createUpdateableAssociation(imageObjPath);
+        deleteImageManagerObject(imageObjPath);
+        auto versionObj = versions.find(imageVersionId);
+        if (versionObj != versions.end())
+        {
+            storePurpose(imageVersionId, versionObj->second->purpose());
+            versions.erase(imageVersionId);
+        }
     }
+    else
+    {
+        msg += "Not all hosts have been upgraded, cannot perform cleaning";
+    }
+    log<level::INFO>(msg.c_str());
 }
 
 
