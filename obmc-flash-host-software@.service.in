@@ -5,7 +5,7 @@ Description=host service flash, the %i can be in the form \
 [Service]
 ## in multi-host machines be careful about the "type"
 ## as the environment is used they should not start at same time
-Type=exec
+Type=oneshot
 RemainAfterExit=no
 
 ExecStartPre=/bin/sh -c "image=`/bin/echo %i | /usr/bin/awk  \
