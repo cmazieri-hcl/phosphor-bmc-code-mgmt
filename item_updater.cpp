@@ -212,7 +212,7 @@ bool ItemUpdater::checkImage(const std::string& filePath,
 }
 
 
-void ItemUpdater::deleteImageManagerObject()
+void ItemUpdater::deleteImageManagerObject(const std::string& img_obj_path)
 {
     // Call the Delete object for <versionID> inside image_manager
     auto method = this->bus.new_method_call(VERSION_BUSNAME,

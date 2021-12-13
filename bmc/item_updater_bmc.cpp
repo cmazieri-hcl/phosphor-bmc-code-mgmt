@@ -483,7 +483,7 @@ void ItemUpdaterBmc::erase(std::string entryId)
     else
     {
         removeAssociations(iteratorActivations->second->path);
-        deleteImageManagerObject();
+        deleteImageManagerObject(iteratorActivations->second->path);
         this->activations.erase(entryId);
     }
     this->resetUbootEnvVars();
