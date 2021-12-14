@@ -14,6 +14,8 @@
 // limitations under the License.
 */
 
+#pragma once
+
 
 #include "ipmidbusutils.hpp"
 #include <sdbusplus/bus.hpp>
