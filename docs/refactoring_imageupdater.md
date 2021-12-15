@@ -58,6 +58,10 @@ The *ItemUpdater* class becomes an abstract class and new classes
 |void freeSpace(Activation& caller)| public|
 |void createActivation(sdbusplus::message::message& msg)| private|
 
+### New Methods on ItemUpdater class  as pure virtual
+| Method | Scope|
+|------|------|
+| void onActivationDone(const std::string& imageVersionId)|public|
 
 ### ItemUpdaterBmc class
 
